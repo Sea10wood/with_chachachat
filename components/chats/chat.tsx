@@ -103,26 +103,27 @@ export default function ChatUI({ chatData, index }: Props) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           message: chatData.message?.replace(/@Meerchat\b/i, '').trim() ?? '',
           parentMessageId: chatData.id,
           userId: user.id
-        }),
+        })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'AI response failed');
+        throw new Error(errorData.error || 'AIの返答の取得に失敗しました');
       }
 
       const data = await response.json();
       setAiResponse(data.response);
       setAiMessageId(data.messageId);
       setHasProcessedMessage(true);
-    } catch (error) {
-      console.error('Error getting AI response:', error);
-      setError(error instanceof Error ? error.message : 'エラーが発生しました');
+    } catch (err) {
+      console.error('AI返答の取得エラー:', err);
+      setError(err instanceof Error ? err.message : 'AIの返答の取得に失敗しました');
       setHasProcessedMessage(true);
     } finally {
       setIsLoading(false);
