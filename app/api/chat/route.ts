@@ -4,8 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
+// OpenAIクライアントの初期化を改善
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || '',
 });
 
 // Supabaseクライアントの設定を修正
@@ -58,14 +59,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const { message, parentMessageId, userId } = await request.json();
-
-    // ユーザーIDの検証
-    if (userId !== session.user.id) {
+    // リクエストボディの解析を改善
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
       return NextResponse.json(
-        { error: '不正なユーザーIDです' },
+        { error: '無効なリクエストボディです' },
         { 
-          status: 403,
+          status: 400,
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -74,8 +76,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // 入力値の検証
-    if (!message?.trim()) {
+    const { message, parentMessageId, userId } = body;
+
+    // 入力値の検証を強化
+    if (!message || typeof message !== 'string' || !message.trim()) {
       return NextResponse.json(
         { error: 'メッセージが空です' },
         { 
@@ -88,11 +92,38 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!parentMessageId) {
+    if (!parentMessageId || typeof parentMessageId !== 'string') {
       return NextResponse.json(
         { error: '親メッセージIDが必要です' },
         { 
           status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
+    }
+
+    if (!userId || typeof userId !== 'string') {
+      return NextResponse.json(
+        { error: 'ユーザーIDが必要です' },
+        { 
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
+    }
+
+    // ユーザーIDの検証
+    if (userId !== session.user.id) {
+      return NextResponse.json(
+        { error: '不正なユーザーIDです' },
+        { 
+          status: 403,
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -138,52 +169,81 @@ export async function POST(request: Request) {
     const parentMessage = parentMessages[0];
 
     // OpenAI APIの呼び出し
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: SYSTEM_PROMPT
-        },
-        {
-          role: "user",
-          content: message
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
-    });
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: SYSTEM_PROMPT
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      });
 
-    const response = completion.choices[0]?.message?.content || "すみません、回答を生成できませんでした。";
+      const response = completion.choices[0]?.message?.content || "すみません、回答を生成できませんでした。";
 
-    // AIの返答を保存
-    const aiUserId = generateAIUserId();
-    const { data: aiMessage, error: insertError } = await supabase
-      .from('Chats')
-      .insert({
-        message: response,
-        uid: aiUserId,
-        is_ai_response: true,
-        parent_message_id: parentMessageId,
-        channel: parentMessage.channel,
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error('AI返答の保存エラー:', {
-        error: insertError,
-        data: {
+      // AIの返答を保存
+      const aiUserId = generateAIUserId();
+      const { data: aiMessage, error: insertError } = await supabase
+        .from('Chats')
+        .insert({
           message: response,
           uid: aiUserId,
           is_ai_response: true,
           parent_message_id: parentMessageId,
-          channel: parentMessage.channel
-        }
-      });
+          channel: parentMessage.channel,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('AI返答の保存エラー:', {
+          error: insertError,
+          data: {
+            message: response,
+            uid: aiUserId,
+            is_ai_response: true,
+            parent_message_id: parentMessageId,
+            channel: parentMessage.channel
+          }
+        });
+        return NextResponse.json(
+          { error: 'AIの返答の保存に失敗しました: ' + insertError.message },
+          { 
+            status: 500,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          }
+        );
+      }
+
       return NextResponse.json(
-        { error: 'AIの返答の保存に失敗しました: ' + insertError.message },
+        { 
+          response, 
+          messageId: aiMessage.id,
+          timestamp: aiMessage.created_at 
+        },
+        { 
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
+    } catch (openaiError) {
+      console.error('OpenAI APIエラー:', openaiError);
+      return NextResponse.json(
+        { error: 'AIの応答生成に失敗しました: ' + (openaiError instanceof Error ? openaiError.message : '不明なエラー') },
         { 
           status: 500,
           headers: {
@@ -193,21 +253,6 @@ export async function POST(request: Request) {
         }
       );
     }
-
-    return NextResponse.json(
-      { 
-        response, 
-        messageId: aiMessage.id,
-        timestamp: aiMessage.created_at 
-      },
-      { 
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      }
-    );
   } catch (error) {
     console.error('予期せぬエラー:', error);
     return NextResponse.json(
