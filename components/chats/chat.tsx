@@ -1,184 +1,102 @@
 "use client"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/types/supabasetype"
-import DateFormatter from "@/components/date"
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState } from "react"
+import DateFormatter from '@/components/date';
 
-type Props = {
+interface Props {
   chatData: Database["public"]["Tables"]["Chats"]["Row"],
   index: number,
 }
 
-export default function ChatUI({ chatData, index }: Props) {
-  const supabase = createClientComponentClient();
-  const [userName, setUserName] = useState("")
-  const [isMentioned, setIsMentioned] = useState(false)
-  const [aiResponse, setAiResponse] = useState("")
-  const [aiMessageId, setAiMessageId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [hasProcessedMessage, setHasProcessedMessage] = useState(false)
-
-  const getData = async () => {
-    try {
-      // AIの返答の場合は特別なユーザー名を設定
-      if (chatData.is_ai_response) {
-        setUserName('みーあちゃっと');
-        return;
-      }
-
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select()
-        .eq("id", chatData.uid)
-        .single();
-
-      if (error) {
-        console.error('プロフィール取得エラー:', error);
-        setUserName('不明なユーザー');
-        return;
-      }
-
-      if (!profile) {
-        console.error('プロフィールが見つかりません:', chatData.uid);
-        setUserName('不明なユーザー');
-        return;
-      }
-
-      setUserName(profile.name);
-    } catch (err) {
-      console.error('データ取得エラー:', err);
-      setUserName('不明なユーザー');
-    }
-  }
-
-  const checkMention = () => {
-    try {
-      const mentionPattern = /@Meerchat\b/i;
-      const mentioned = mentionPattern.test(chatData.message ?? '');
-      setIsMentioned(mentioned);
-      
-      // メンションされていない場合は処理済みとしてマーク
-      if (!mentioned) {
-        setHasProcessedMessage(true);
-      }
-    } catch (err) {
-      console.error('メンションチェックエラー:', err);
-      setIsMentioned(false);
-      setHasProcessedMessage(true);
-    }
-  }
-
-  const getAIResponse = async () => {
-    // 以下の条件のいずれかに該当する場合はリクエストを送信しない
-    if (
-      !isMentioned || // メンションされていない
-      isLoading || // 既にローディング中
-      hasProcessedMessage || // 既に処理済み
-      aiResponse || // 既にAIの応答がある
-      error || // エラーが発生している
-      chatData.parent_message_id // 親メッセージIDが存在する
-    ) {
-      return;
-    }
-
-    try {
-      // このメッセージに対する既存のAI応答を確認
-      const { data: existingResponses, error: checkError } = await supabase
-        .from('Chats')
-        .select('id, message')
-        .eq('parent_message_id', chatData.id)
-        .eq('is_ai_response', true)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116は結果が0件の場合
-        console.error('既存の応答確認エラー:', checkError);
-        return;
-      }
-
-      // 既にAI応答が存在する場合は、その応答を表示
-      if (existingResponses) {
-        setAiResponse(existingResponses.message);
-        setAiMessageId(existingResponses.id);
-        setHasProcessedMessage(true);
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setError('ユーザー認証が必要です');
-        setHasProcessedMessage(true);
-        return;
-      }
-
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          message: chatData.message?.replace(/@Meerchat\b/i, '').trim() ?? '',
-          parentMessageId: chatData.id,
-          userId: user.id
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'AIの返答の取得に失敗しました');
-      }
-
-      const data = await response.json();
-      if (!data.response) {
-        throw new Error('AIの返答が空です');
-      }
-
-      setAiResponse(data.response);
-      setAiMessageId(data.messageId);
-      setHasProcessedMessage(true);
-    } catch (err) {
-      console.error('AI返答の取得エラー:', err);
-      setError(err instanceof Error ? err.message : 'AIの返答の取得に失敗しました');
-      setHasProcessedMessage(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+export default function ChatUI(props: Props) {
+  const { chatData, index } = props
+  const supabase = createClientComponentClient()
+  const [username, setUsername] = useState("")
+  const [isMyMessage, setIsMyMessage] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    getData();
-    checkMention();
-  }, []);
+    const getData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user == null) {
+          setIsLoading(false)
+          return
+        }
 
-  useEffect(() => {
-    if (isMentioned && !hasProcessedMessage) {
-      getAIResponse();
+        // 自分のメッセージかどうかを判定
+        setIsMyMessage(user.id === chatData.uid)
+
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select()
+          .eq("id", chatData.uid)
+
+        if (error) {
+          console.log(error)
+          setUsername('不明なユーザー')
+          setIsLoading(false)
+          return
+        }
+
+        if (profile && profile.length > 0) {
+          setUsername(profile[0].name)
+        } else {
+          setUsername('不明なユーザー')
+        }
+        setIsLoading(false)
+
+      } catch (error) {
+        console.error(error)
+        setUsername('不明なユーザー')
+        setIsLoading(false)
+      }
     }
-  }, [isMentioned, hasProcessedMessage]);
+
+    getData()
+  }, [chatData.uid, supabase])
+
+  if (isLoading) {
+    return (
+      <div className="flex items-start gap-2 p-4">
+        <div className="animate-pulse flex space-x-4">
+          <div className="rounded-full bg-gray-200 h-8 w-8"></div>
+          <div className="flex-1 space-y-2 py-1">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="p-2 border-b-2">
-      <div className="flex">
-        <p className="pr-2">{index + 1}</p>
-        <h2 className="font-medium text-gray-900 truncate">{userName}</h2>
-      </div>
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500"><DateFormatter timestamp={chatData.created_at || ""}></DateFormatter></p>
-        <p className="w-32 text-sm text-gray-500 truncate">ID:{chatData.uid}</p>
-      </div>
-      <p className="mt-2">{chatData.message}</p>
-      {isLoading && <p className="mt-2 text-gray-500">AIが応答を生成中...</p>}
-      {error && <p className="mt-2 text-red-500">エラー: {error}</p>}
-      {aiResponse && (
-        <div className="mt-2 pl-4 border-l-2 border-gray-300">
-          <p className="font-medium text-gray-700">みーあちゃっと:</p>
-          <p>{aiResponse}</p>
+    <div className={`flex items-start gap-2 p-4 ${isMyMessage ? 'flex-row-reverse' : 'flex-row'}`}>
+      <img
+        src={chatData.is_ai_response ? "/ai.png" : "/user.png"}
+        className="object-cover h-8 w-8 rounded-full"
+        alt=""
+      />
+      <div className={`flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}>
+        <div
+          className={`py-3 px-4 rounded-2xl ${
+            isMyMessage 
+              ? "bg-blue-400 rounded-tr-none" 
+              : "bg-gray-400 rounded-tl-none"
+          } text-white`}
+        >
+          {chatData.message}
         </div>
-      )}
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-gray-500 text-xs">{username}</span>
+          <span className="text-gray-500 text-xs">
+            <DateFormatter timestamp={chatData.created_at || ''} />
+          </span>
+        </div>
+      </div>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { Database } from "@/types/supabasetype"
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import ChatUI from "@/components/chats/chat"
+import SideBar from "@/components/sidebar"
 
 export default function Chats() {
   const supabase = createClientComponentClient()
@@ -17,6 +18,7 @@ export default function Chats() {
   const [userID, setUserID] = useState("")
   const [messageText, setMessageText] = useState<Database["public"]["Tables"]["Chats"]["Row"][]>([])
   const [processedMessageIds] = useState(new Set<string>())
+  const [profiles, setProfiles] = useState<Database["public"]["Tables"]["profiles"]["Row"][]>([])
 
   const fetchRealtimeData = () => {
     if (!channelName) {
@@ -37,6 +39,11 @@ export default function Chats() {
           if (payload.eventType === "INSERT") {
             const { created_at, id, message, uid, channel, is_ai_response, parent_message_id } = payload.new;
             
+            // 現在のチャンネルのメッセージのみを処理
+            if (channel !== channelName) {
+              return;
+            }
+            
             // 既に処理済みのメッセージIDはスキップ
             if (processedMessageIds.has(id)) {
               return;
@@ -51,7 +58,6 @@ export default function Chats() {
                 return prevMessages;
               }
               
-              // 通常のメッセージはそのまま追加
               return [...prevMessages, { 
                 id, 
                 created_at, 
@@ -68,10 +74,10 @@ export default function Chats() {
       .subscribe();
   };
 
-  // 初回のみ実行するために引数に空の配列を渡している
+  // チャンネルが変更されたときにメッセージを再取得
   useEffect(() => {
-    (async () => {
-      let allMessages = null
+    const fetchMessages = async () => {
+      let allMessages = null;
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user != null) {
@@ -98,12 +104,17 @@ export default function Chats() {
         console.error(error)
       }
       if (allMessages != null) {
-        // メッセージをそのまま表示（AIの応答も含む）
-        setMessageText(allMessages);
+        // メッセージを時系列順に並び替え
+        const sortedMessages = allMessages.sort((a, b) => {
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        });
+        setMessageText(sortedMessages);
       }
-    })()
-    fetchRealtimeData()
-  }, [])
+    };
+
+    fetchMessages();
+    fetchRealtimeData();
+  }, [channelName]); // channelNameが変更されたときに再実行
 
   const onSubmitNewMessage = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -131,16 +142,36 @@ export default function Chats() {
       }
 
       try {
-        const { error } = await supabase.from("Chats").insert({
+        const { data: newMessage, error } = await supabase.from("Chats").insert({
           message: inputText,
           uid: userID,
           channel: channelName,
           is_ai_response: false,
-        });
+        }).select().single();
 
         if (error) {
           console.error("Error inserting chat:", error.message);
           return;
+        }
+
+        // AIの返答を取得
+        if (newMessage) {
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: inputText,
+              parentMessageId: newMessage.id,
+              userId: userID,
+              channel: channelName
+            }),
+          });
+
+          if (!response.ok) {
+            console.error('AI response error:', response.statusText);
+          }
         }
       } catch (error) {
         console.error("Unexpected error:", error);
@@ -152,28 +183,42 @@ export default function Chats() {
     setInputText("")
   }
 
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const id = e.currentTarget.id;
+    // ここでチャンネル名を更新するなどの処理を追加できます
+  };
+
   return (
-    <div className="flex-1 w-full flex flex-col items-center p-2">
-      <h1 className="text-3xl font-bold pt-5 pb-10">{channelName}</h1>
-      <div className="w-full max-w-3xl mb-10 border-t-2 border-x-2">
-        {messageText.map((item, index) => (
-          <ChatUI chatData={item} index={index} key={item.id || index}></ChatUI>
-        ))}
-      </div>
-
-      <form className="w-full max-w-md pb-10" onSubmit={onSubmitNewMessage}>
-        <div className="mb-5">
-          <label htmlFor="message" className="block mb-2 text-sm font-medium text-gray-900">投稿内容</label>
-          <textarea id="message" name="message" rows={4} className="block p-2.5 w-full text-sm text-gray-900
-                 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="投稿内容を入力" value={inputText} onChange={(event) => setInputText(() => event.target.value)}>
-          </textarea>
+    <div className="flex h-screen">
+      <SideBar profiles={profiles} setProfiles={setProfiles} handleClick={handleClick} />
+      <div className="flex-1 flex flex-col">
+        <div className="p-4 border-b">
+          <h1 className="text-2xl font-bold">{channelName}</h1>
         </div>
-
-        <button type="submit" disabled={inputText === ""} className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center disabled:opacity-25">
-          送信
-        </button>
-      </form>
+        <div className="flex-1 overflow-y-auto p-4">
+          {messageText.map((item, index) => (
+            <ChatUI chatData={item} index={index} key={item.id || index} />
+          ))}
+        </div>
+        <form className="p-2 border-t" onSubmit={onSubmitNewMessage}>
+          <div className="flex gap-2">
+            <textarea
+              className="flex-1 p-2 border rounded-lg resize-none"
+              rows={2}
+              placeholder="メッセージを入力..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+            />
+            <button
+              type="submit"
+              disabled={inputText === ""}
+              className="px-3 py-1.5 bg-blue-500 text-white rounded-lg disabled:opacity-50 text-sm"
+            >
+              送信
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }
