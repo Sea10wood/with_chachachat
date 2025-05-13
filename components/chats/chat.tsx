@@ -137,29 +137,8 @@ export default function ChatUI({ chatData, index }: Props) {
         throw new Error('AIの返答が空です');
       }
 
-      // 応答を保存する前に少し待機
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // 保存された応答を再取得
-      const { data: savedResponse, error: fetchError } = await supabase
-        .from('Chats')
-        .select('id, message')
-        .eq('id', data.messageId)
-        .single();
-
-      if (fetchError) {
-        console.error('保存された応答の取得エラー:', fetchError);
-        throw new Error('保存された応答の取得に失敗しました');
-      }
-
-      if (savedResponse) {
-        setAiResponse(savedResponse.message);
-        setAiMessageId(savedResponse.id);
-      } else {
-        setAiResponse(data.response);
-        setAiMessageId(data.messageId);
-      }
-
+      setAiResponse(data.response);
+      setAiMessageId(data.messageId);
       setHasProcessedMessage(true);
     } catch (err) {
       console.error('AI返答の取得エラー:', err);

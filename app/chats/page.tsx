@@ -51,11 +51,6 @@ export default function Chats() {
                 return prevMessages;
               }
               
-              // AIの応答は表示しない
-              if (is_ai_response) {
-                return prevMessages;
-              }
-              
               // 通常のメッセージはそのまま追加
               return [...prevMessages, { 
                 id, 
@@ -103,12 +98,8 @@ export default function Chats() {
         console.error(error)
       }
       if (allMessages != null) {
-        // AIの応答をフィルタリング
-        const filteredMessages = allMessages.filter(msg => 
-          // AIの応答でないメッセージのみを表示
-          !msg.is_ai_response
-        );
-        setMessageText(filteredMessages);
+        // メッセージをそのまま表示（AIの応答も含む）
+        setMessageText(allMessages);
       }
     })()
     fetchRealtimeData()
