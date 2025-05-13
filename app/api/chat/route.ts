@@ -118,7 +118,7 @@ export async function POST(request: Request) {
       .from('Chats')
       .insert({
         message: response,
-        uid: '00000000-0000-0000-0000-000000000000',  // AI用の固定UUID
+        uid: '00000000-0000-4000-8000-000000000000',  // 有効なUUID形式
         is_ai_response: true,
         parent_message_id: parentMessageId,  // 親メッセージIDを必ず設定
         channel: parentMessage.channel,
@@ -132,7 +132,7 @@ export async function POST(request: Request) {
         error: insertError,
         data: {
           message: response,
-          uid: '00000000-0000-0000-0000-000000000000',
+          uid: '00000000-0000-4000-8000-000000000000',  // 有効なUUID形式
           is_ai_response: true,
           parent_message_id: parentMessageId,
           channel: parentMessage.channel

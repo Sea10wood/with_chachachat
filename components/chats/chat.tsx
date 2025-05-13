@@ -21,7 +21,7 @@ export default function ChatUI({ chatData, index }: Props) {
 
   const getData = async () => {
     // AIの返答の場合は特別なユーザー名を設定
-    if (chatData.uid === 'meerchat-ai') {
+    if (chatData.is_ai_response) {
       setUserName('みーあちゃっと');
       return;
     }
@@ -62,7 +62,6 @@ export default function ChatUI({ chatData, index }: Props) {
       hasProcessedMessage || // 既に処理済み
       aiResponse || // 既にAIの応答がある
       error || // エラーが発生している
-      chatData.is_ai_response || // AIの応答メッセージ
       chatData.parent_message_id // 親メッセージIDが存在する
     ) {
       return;
