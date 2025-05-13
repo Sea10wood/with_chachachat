@@ -20,36 +20,51 @@ export default function ChatUI({ chatData, index }: Props) {
   const [hasProcessedMessage, setHasProcessedMessage] = useState(false)
 
   const getData = async () => {
-    // AIの返答の場合は特別なユーザー名を設定
-    if (chatData.is_ai_response) {
-      setUserName('みーあちゃっと');
-      return;
+    try {
+      // AIの返答の場合は特別なユーザー名を設定
+      if (chatData.is_ai_response) {
+        setUserName('みーあちゃっと');
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select()
+        .eq("id", chatData.uid)
+        .single();
+
+      if (error) {
+        console.error('プロフィール取得エラー:', error);
+        setUserName('不明なユーザー');
+        return;
+      }
+
+      if (!profile) {
+        console.error('プロフィールが見つかりません:', chatData.uid);
+        setUserName('不明なユーザー');
+        return;
+      }
+
+      setUserName(profile.name);
+    } catch (err) {
+      console.error('データ取得エラー:', err);
+      setUserName('不明なユーザー');
     }
-
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select()
-      .eq("id", chatData.uid)
-
-    if (error) {
-      console.log(error);
-      return
-    }
-
-    if (profile.length !== 1) {
-      return
-    }
-
-    setUserName(profile[0].name)
   }
 
   const checkMention = () => {
-    const mentionPattern = /@Meerchat\b/i;
-    const mentioned = mentionPattern.test(chatData.message ?? '');
-    setIsMentioned(mentioned);
-    
-    // メンションされていない場合は処理済みとしてマーク
-    if (!mentioned) {
+    try {
+      const mentionPattern = /@Meerchat\b/i;
+      const mentioned = mentionPattern.test(chatData.message ?? '');
+      setIsMentioned(mentioned);
+      
+      // メンションされていない場合は処理済みとしてマーク
+      if (!mentioned) {
+        setHasProcessedMessage(true);
+      }
+    } catch (err) {
+      console.error('メンションチェックエラー:', err);
+      setIsMentioned(false);
       setHasProcessedMessage(true);
     }
   }
@@ -67,31 +82,31 @@ export default function ChatUI({ chatData, index }: Props) {
       return;
     }
 
-    // このメッセージに対する既存のAI応答を確認
-    const { data: existingResponses, error: checkError } = await supabase
-      .from('Chats')
-      .select('id, message')
-      .eq('parent_message_id', chatData.id)
-      .eq('is_ai_response', true)
-      .single();
-
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116は結果が0件の場合
-      console.error('Error checking existing responses:', checkError);
-      return;
-    }
-
-    // 既にAI応答が存在する場合は、その応答を表示
-    if (existingResponses) {
-      setAiResponse(existingResponses.message);
-      setAiMessageId(existingResponses.id);
-      setHasProcessedMessage(true);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
     try {
+      // このメッセージに対する既存のAI応答を確認
+      const { data: existingResponses, error: checkError } = await supabase
+        .from('Chats')
+        .select('id, message')
+        .eq('parent_message_id', chatData.id)
+        .eq('is_ai_response', true)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116は結果が0件の場合
+        console.error('既存の応答確認エラー:', checkError);
+        return;
+      }
+
+      // 既にAI応答が存在する場合は、その応答を表示
+      if (existingResponses) {
+        setAiResponse(existingResponses.message);
+        setAiMessageId(existingResponses.id);
+        setHasProcessedMessage(true);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setError('ユーザー認証が必要です');
@@ -118,6 +133,10 @@ export default function ChatUI({ chatData, index }: Props) {
       }
 
       const data = await response.json();
+      if (!data.response) {
+        throw new Error('AIの返答が空です');
+      }
+
       setAiResponse(data.response);
       setAiMessageId(data.messageId);
       setHasProcessedMessage(true);
@@ -131,15 +150,15 @@ export default function ChatUI({ chatData, index }: Props) {
   }
 
   useEffect(() => {
-    getData()
-    checkMention()
-  }, [])
+    getData();
+    checkMention();
+  }, []);
 
   useEffect(() => {
     if (isMentioned && !hasProcessedMessage) {
-      getAIResponse()
+      getAIResponse();
     }
-  }, [isMentioned, hasProcessedMessage])
+  }, [isMentioned, hasProcessedMessage]);
 
   return (
     <div className="p-2 border-b-2">
