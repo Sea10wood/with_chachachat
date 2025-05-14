@@ -34,15 +34,11 @@ export default function Chats() {
           event: "*",
           schema: "public",
           table: "Chats",
+          filter: `channel=eq.${channelName}`
         },
         async (payload) => {
           if (payload.eventType === "INSERT") {
             const { created_at, id, message, uid, channel, is_ai_response, parent_message_id } = payload.new;
-            
-            // 現在のチャンネルのメッセージのみを処理
-            if (channel !== channelName) {
-              return;
-            }
             
             // 既に処理済みのメッセージIDはスキップ
             if (processedMessageIds.has(id)) {
@@ -124,7 +120,7 @@ export default function Chats() {
       alert("ログイン情報またはチャンネル名が不足しています。");
       return;
     }
-    console.log({ userID, channelName, inputText });
+
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -132,8 +128,8 @@ export default function Chats() {
         .eq("id", userID)
 
       if (error) {
-        console.log(error);
-        return
+        console.error("プロフィール取得エラー:", error);
+        return;
       }
 
       if (profile.length !== 1) {
@@ -141,46 +137,28 @@ export default function Chats() {
         return;
       }
 
-      try {
-        const { data: newMessage, error } = await supabase.from("Chats").insert({
+      // メッセージを保存し、AI応答も処理
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           message: inputText,
-          uid: userID,
-          channel: channelName,
-          is_ai_response: false,
-        }).select().single();
+          channel: channelName
+        }),
+      });
 
-        if (error) {
-          console.error("Error inserting chat:", error.message);
-          return;
-        }
-
-        // AIの返答を取得
-        if (newMessage) {
-          const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              message: inputText,
-              parentMessageId: newMessage.id,
-              userId: userID,
-              channel: channelName
-            }),
-          });
-
-          if (!response.ok) {
-            console.error('AI response error:', response.statusText);
-          }
-        }
-      } catch (error) {
-        console.error("Unexpected error:", error);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('メッセージ送信エラー:', errorData.error || response.statusText);
+        return;
       }
+
+      setInputText("");
     } catch (error) {
-      console.error(error)
-      return
+      console.error("予期せぬエラー:", error);
     }
-    setInputText("")
   }
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
