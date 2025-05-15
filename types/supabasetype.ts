@@ -11,25 +11,28 @@ export type Database = {
     Tables: {
       Chats: {
         Row: {
-          channel: string | null
+          id: string
           created_at: string | null
-          id: number
           message: string | null
           uid: string | null
+          is_ai_response: boolean
+          parent_message_id: string | null
         }
         Insert: {
-          channel?: string | null
+          id?: string
           created_at?: string | null
-          id: number
           message?: string | null
           uid?: string | null
+          is_ai_response?: boolean
+          parent_message_id?: string | null
         }
         Update: {
-          channel?: string | null
+          id?: string
           created_at?: string | null
-          id?: number
           message?: string | null
           uid?: string | null
+          is_ai_response?: boolean
+          parent_message_id?: string | null
         }
         Relationships: [
           {

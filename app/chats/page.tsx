@@ -16,13 +16,14 @@ export default function Chats() {
   const [inputText, setInputText] = useState("")
   const [userID, setUserID] = useState("")
   const [messageText, setMessageText] = useState<Database["public"]["Tables"]["Chats"]["Row"][]>([])
+  const [processedMessageIds] = useState(new Set<string>())
 
   const fetchRealtimeData = () => {
     if (!channelName) {
       console.error("channelName is undefined. Skipping real-time subscription.");
       return;
     }
-
+  
     supabase
       .channel(channelName)
       .on(
@@ -32,13 +33,35 @@ export default function Chats() {
           schema: "public",
           table: "Chats",
         },
-        (payload) => {
+        async (payload) => {
           if (payload.eventType === "INSERT") {
-            const { created_at, id, message, uid, channel } = payload.new;
-            setMessageText((messageText) => [
-              ...messageText,
-              { id, created_at, message, uid, channel },
-            ]);
+            const { created_at, id, message, uid, channel, is_ai_response, parent_message_id } = payload.new;
+            
+            // 既に処理済みのメッセージIDはスキップ
+            if (processedMessageIds.has(id)) {
+              return;
+            }
+            
+            // メッセージIDを処理済みとしてマーク
+            processedMessageIds.add(id);
+            
+            setMessageText((prevMessages) => {
+              // 同じIDのメッセージが既に存在する場合は追加しない
+              if (prevMessages.some(msg => msg.id === id)) {
+                return prevMessages;
+              }
+              
+              // 通常のメッセージはそのまま追加
+              return [...prevMessages, { 
+                id, 
+                created_at, 
+                message, 
+                uid, 
+                channel,
+                is_ai_response,
+                parent_message_id
+              }];
+            });
           }
         }
       )
@@ -54,15 +77,29 @@ export default function Chats() {
         if (user != null) {
           setUserID(user.id)
         }
-
-        const { data } = await supabase.from("Chats").select("*").eq('channel', channelName).order("created_at")
-
-        allMessages = data
+  
+        const { data } = await supabase
+          .from("Chats")
+          .select("*")
+          .eq('channel', channelName)
+          .order("created_at");
+  
+        allMessages = data;
+        
+        // 初期メッセージのIDを処理済みとしてマーク
+        if (allMessages) {
+          allMessages.forEach(msg => {
+            if (msg.id) {
+              processedMessageIds.add(msg.id);
+            }
+          });
+        }
       } catch (error) {
         console.error(error)
       }
       if (allMessages != null) {
-        setMessageText(allMessages)
+        // メッセージをそのまま表示（AIの応答も含む）
+        setMessageText(allMessages);
       }
     })()
     fetchRealtimeData()
@@ -90,6 +127,7 @@ export default function Chats() {
 
       if (profile.length !== 1) {
         alert("投稿前にユーザ名を設定してください。")
+        return;
       }
 
       try {
@@ -97,6 +135,7 @@ export default function Chats() {
           message: inputText,
           uid: userID,
           channel: channelName,
+          is_ai_response: false,
         });
 
         if (error) {
