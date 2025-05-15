@@ -64,17 +64,17 @@ export default function Navigation() {
                 >
                   ホーム
                 </Link>
-                {session ? (
-                  <Link
-                    href="/profile"
+          {session ? (
+              <Link
+                href="/profile"
                     className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                       pathname === "/profile"
                         ? "border-blue-500 text-gray-900"
                         : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                     }`}
-                  >
+              >
                     プロフィール
-                  </Link>
+              </Link>
                 ) : (
                   <div className="flex space-x-4">
                     <ModalCore modalType={ModalType.SignIn} />
@@ -159,10 +159,10 @@ export default function Navigation() {
                 <ModalCore modalType={ModalType.SignIn} />
                 <ModalCore modalType={ModalType.SignUp} />
               </div>
-            )}
+          )}
           </div>
         </div>
-      </nav>
+        </nav>
 
       {/* ログアウト確認モーダル */}
       {isLogoutModalOpen && (
@@ -185,7 +185,7 @@ export default function Navigation() {
               </button>
             </div>
           </div>
-        </div>
+      </div>
       )}
     </>
   )
