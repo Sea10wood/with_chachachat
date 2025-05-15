@@ -36,6 +36,20 @@ export default function SignInForm(props: {
     return true;
   };
 
+  const getErrorMessage = (error: any) => {
+    const errorMessage = error.message;
+    if (errorMessage.includes("Invalid login credentials")) {
+      return "メールアドレスまたはパスワードが正しくありません";
+    }
+    if (errorMessage.includes("Email not confirmed")) {
+      return "メールアドレスの確認が完了していません";
+    }
+    if (errorMessage.includes("Too many requests")) {
+      return "短時間に多くのリクエストが発生しました。しばらく時間をおいて再度お試しください";
+    }
+    return "エラーが発生しました。しばらく時間をおいて再度お試しください";
+  };
+
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -50,14 +64,14 @@ export default function SignInForm(props: {
       });
 
       if (signInError) {
-        setError(signInError.message);
+        setError(getErrorMessage(signInError));
         setShowErrorModal(true);
         return;
       }
 
       showModal(false);
     } catch (error) {
-      setError("エラーが発生しました");
+      setError("エラーが発生しました。しばらく時間をおいて再度お試しください");
       setShowErrorModal(true);
     }
   };

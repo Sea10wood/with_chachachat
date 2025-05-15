@@ -48,6 +48,23 @@ export default function SignUpForm(props: {
     return true;
   };
 
+  const getErrorMessage = (error: any) => {
+    const errorMessage = error.message;
+    if (errorMessage.includes("User already registered")) {
+      return "このメールアドレスは既に登録されています";
+    }
+    if (errorMessage.includes("Password should be at least 6 characters")) {
+      return "パスワードは6文字以上で入力してください";
+    }
+    if (errorMessage.includes("Invalid email")) {
+      return "有効なメールアドレスを入力してください";
+    }
+    if (errorMessage.includes("Too many requests")) {
+      return "短時間に多くのリクエストが発生しました。しばらく時間をおいて再度お試しください";
+    }
+    return "エラーが発生しました。しばらく時間をおいて再度お試しください";
+  };
+
   const onSubmit = async (event: any) => {
     event.preventDefault();
     
@@ -64,14 +81,14 @@ export default function SignUpForm(props: {
         },
       });
       if (signUpError) {
-        setError(signUpError.message);
+        setError(getErrorMessage(signUpError));
         setShowErrorModal(true);
         return;
       }
       showModal(false);
       alert("登録完了メールを確認してください");
     } catch (error) {
-      setError("エラーが発生しました");
+      setError("エラーが発生しました。しばらく時間をおいて再度お試しください");
       setShowErrorModal(true);
     }
   };
