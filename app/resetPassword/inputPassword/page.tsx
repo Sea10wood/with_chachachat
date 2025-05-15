@@ -30,7 +30,7 @@ const InputPasswordForReset = () => {
   if (error) {
     return (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16 pt-20 text-center lg:pt-32">
-             <p>エラーが発生しました</p>
+             <p className="text-loading-color">エラーが発生しました</p>
         </div>
     )
   }
@@ -38,19 +38,19 @@ const InputPasswordForReset = () => {
   if (isSend) {
     return (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16 pt-20 text-center lg:pt-32">
-             <p>パスワードを更新しました</p>
+             <p className="text-black">パスワードを更新しました</p>
         </div>
     )
   }
   
   return (
     <div className="mx-auto max-w-7xl md:w-1/2 lg:w-1/4 px-4 sm:px-6 lg:px-8 pb-16 pt-20 text-center lg:pt-32">
-     <p>新しいパスワードを入力してください</p>
+     <p className="text-black mb-4">新しいパスワードを入力してください</p>
      <form className="pt-10 text-left" onSubmit={onSubmit}>
         <div>
             <label
             htmlFor="password"
-            className="block mb-2 text-sm font-medium text-gray-900"
+            className="block mb-2 text-sm font-medium text-black"
             >
             パスワード
             </label>
@@ -59,7 +59,7 @@ const InputPasswordForReset = () => {
             name="password"
             id="password"
             placeholder="••••••••"
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+            className="bg-input-bg border border-send-button text-black text-sm rounded-lg focus:ring-send-button focus:border-send-button block w-full p-2.5"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -68,7 +68,7 @@ const InputPasswordForReset = () => {
       <div className='pt-5'>
         <label
           htmlFor="passwordConf"
-          className="block mb-2 text-sm font-medium text-gray-900"
+          className="block mb-2 text-sm font-medium text-black"
         >
           パスワード（確認）
         </label>
@@ -77,16 +77,19 @@ const InputPasswordForReset = () => {
           name="passwordConf"
           id="passwordConf"
           placeholder="••••••••"
-          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+          className="bg-input-bg border border-send-button text-black text-sm rounded-lg focus:ring-send-button focus:border-send-button block w-full p-2.5"
           required
           value={passwordConf}
           onChange={(e) => setPasswordConf(e.target.value)}
         />
         </div>
         <div className='text-center mt-5'>
-        <button className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-10 py-2.5 text-center"
-         type="submit">送信</button>
-
+        <button 
+          className="text-black bg-send-button hover:bg-loading-color focus:ring-4 focus:outline-none focus:ring-send-button/50 font-medium rounded-lg text-sm px-10 py-2.5 text-center transition-colors duration-200"
+          type="submit"
+        >
+          送信
+        </button>
         </div>
       </form>
     </div>
