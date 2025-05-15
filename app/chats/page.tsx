@@ -5,13 +5,14 @@ import { useEffect, useState, useRef, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import ChatUI from "@/components/chats/chat"
 import SideBar from "@/components/sidebar"
+import Loading from "@/components/loading"
 
 const MESSAGE_LIMIT = 20;
 const SCROLL_THRESHOLD = 50;
 const BOTTOM_THRESHOLD = 50;
 
 export default function Chats() {
-  const supabase = createClientComponentClient()
+  const supabase = createClientComponentClient<Database>()
   const searchParams = useSearchParams()
   const channelName = searchParams.get("channel_name");
   if (!channelName) {
@@ -29,7 +30,8 @@ export default function Chats() {
   const [oldestMessageDate, setOldestMessageDate] = useState<string | null>(null)
   const [isNearBottom, setIsNearBottom] = useState(true)
   const [showNewMessageAlert, setShowNewMessageAlert] = useState(false)
-  
+  const [error, setError] = useState<string | null>(null)
+
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const scrollHeightRef = useRef<number>(0)
   const isScrollingRef = useRef(false)
@@ -45,12 +47,26 @@ export default function Chats() {
     return true;
   }, []);
 
+  // メッセージ内の@meerchatをハイライト表示する関数
+  const highlightMentions = (text: string) => {
+    const parts = text.split(/(@meerchat)/g);
+    return parts.map((part, i) => 
+      part === '@meerchat' ? (
+        <span key={i} className="font-bold">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
+
   // スクロール位置の管理
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const element = e.currentTarget;
     const isNearTop = element.scrollTop < SCROLL_THRESHOLD;
     const isBottom = element.scrollHeight - element.scrollTop - element.clientHeight < BOTTOM_THRESHOLD;
-    
+
     setIsNearBottom(isBottom);
 
     // スクロール中フラグの管理
@@ -73,14 +89,14 @@ export default function Chats() {
   // 過去のメッセージを取得
   const fetchMoreMessages = async () => {
     if (!oldestMessageDate || isLoadingPrev || !channelName) {
-      console.log('Skipping fetchMoreMessages:', { 
-        oldestMessageDate, 
-        isLoadingPrev, 
-        channelName 
+      console.log('Skipping fetchMoreMessages:', {
+        oldestMessageDate,
+        isLoadingPrev,
+        channelName
       });
       return;
     }
-    
+
     setIsLoadingPrev(true);
     try {
       console.log('Fetching messages before:', oldestMessageDate);
@@ -103,10 +119,10 @@ export default function Chats() {
         const uniqueMessages = data.filter(msg => addMessageIfNotExists(msg));
 
         // 時系列順にソート（古い順）
-        const sortedMessages = uniqueMessages.sort((a, b) => 
+        const sortedMessages = uniqueMessages.sort((a, b) =>
           new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
-        
+
         // 既存のメッセージと新しいメッセージを結合
         setMessages(prev => [...sortedMessages, ...prev]);
 
@@ -116,14 +132,14 @@ export default function Chats() {
           console.log('Updating oldestMessageDate:', newOldestDate);
           setOldestMessageDate(newOldestDate);
         }
-        
+
         setHasMore(data.length === MESSAGE_LIMIT);
 
         // スクロール位置を復元
         if (messagesContainerRef.current) {
           const newScrollHeight = messagesContainerRef.current.scrollHeight;
           const scrollDiff = newScrollHeight - scrollHeightRef.current;
-          
+
           requestAnimationFrame(() => {
             if (messagesContainerRef.current) {
               messagesContainerRef.current.scrollTop = scrollDiff;
@@ -141,24 +157,22 @@ export default function Chats() {
     }
   };
 
-  // チャンネル変更時のメッセージを再取得
+  // 初期化とチャンネル変更時の処理
   useEffect(() => {
     if (!channelName) return;
 
     const resetAndFetchMessages = async () => {
-      // 状態をリセット
       processedMessageIdsRef.current.clear();
       setMessages([]);
       setHasMore(true);
       setOldestMessageDate(null);
       setShowNewMessageAlert(false);
+      setError(null);
       setIsLoading(true);
-      
+
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          setUserID(user.id);
-        }
+        if (user) setUserID(user.id);
 
         const { data, error } = await supabase
           .from("Chats")
@@ -169,41 +183,22 @@ export default function Chats() {
 
         if (error) {
           console.error("メッセージ取得エラー:", error);
-          return;
+          throw error;
         }
 
         if (data) {
-          // 重複チェックとIDの記録
           const uniqueMessages = data.filter(msg => addMessageIfNotExists(msg));
-
-          // 時系列順にソート（古い順）
-          const sortedMessages = uniqueMessages.sort((a, b) => 
+          const sortedMessages = uniqueMessages.sort((a, b) =>
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
 
           setMessages(sortedMessages);
-          
-          // 最も古いメッセージの日時を保存
-          if (sortedMessages.length > 0) {
-            const oldestDate = sortedMessages[0].created_at;
-            console.log('Setting initial oldestMessageDate:', oldestDate);
-            setOldestMessageDate(oldestDate);
-          }
-          
           setHasMore(data.length === MESSAGE_LIMIT);
-
-          // 初期表示時に最下部にスクロール
-          requestAnimationFrame(() => {
-            if (messagesContainerRef.current) {
-              messagesContainerRef.current.scrollTo({
-                top: messagesContainerRef.current.scrollHeight,
-                behavior: 'instant' // 初期表示時は即座にスクロール
-              });
-            }
-          });
+          setOldestMessageDate(sortedMessages[0]?.created_at || null);
         }
       } catch (error) {
-        console.error("予期せぬエラー:", error);
+        console.error("メッセージ取得エラー:", error);
+        setError("メッセージの取得に失敗しました");
       } finally {
         setIsLoading(false);
       }
@@ -212,9 +207,23 @@ export default function Chats() {
     resetAndFetchMessages();
   }, [channelName]);
 
+  // 初期描画後の自動スクロール
+  useEffect(() => {
+    if (!isLoading && messages.length > 0) {
+      requestAnimationFrame(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTo({
+            top: messagesContainerRef.current.scrollHeight,
+            behavior: 'instant'
+          });
+        }
+      });
+    }
+  }, [isLoading, messages.length]);
+
   // メッセージが追加された時に最下部にスクロール
   useEffect(() => {
-    if (messages.length > 0 && !isLoading) {
+    if (messages.length > 0 && !isLoading && isNearBottom) {
       requestAnimationFrame(() => {
         if (messagesContainerRef.current) {
           messagesContainerRef.current.scrollTo({
@@ -224,7 +233,7 @@ export default function Chats() {
         }
       });
     }
-  }, [messages.length, isLoading]);
+  }, [messages.length, isLoading, isNearBottom]);
 
   // リアルタイム更新の設定
   useEffect(() => {
@@ -239,30 +248,38 @@ export default function Chats() {
     // 新しいチャンネルのサブスクリプションを設定
     const channel = supabase.channel(channelName)
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "INSERT",
-          schema: "public",
-          table: "Chats",
+          event: 'INSERT',
+          schema: 'public',
+          table: 'Chats',
           filter: `channel=eq.${channelName}`
         },
-        (payload) => {
+        (payload: { new: Database["public"]["Tables"]["Chats"]["Row"] }) => {
           const newMessage = payload.new as Database["public"]["Tables"]["Chats"]["Row"];
-          
-          // 現在のチャンネルのメッセージのみ処理
-          if (newMessage.channel !== channelName) return;
-          
+
           // 重複チェックと追加
           if (!addMessageIfNotExists(newMessage)) return;
 
           setMessages(prev => [...prev, newMessage]);
-          
-          // 新しいメッセージがあることを通知
-          setShowNewMessageAlert(true);
-          // 3秒後にアラートを非表示
-          setTimeout(() => {
-            setShowNewMessageAlert(false);
-          }, 3000);
+
+          // 最下部にいる場合のみスクロール、そうでなければアラートを表示
+          if (isNearBottom) {
+            requestAnimationFrame(() => {
+              if (messagesContainerRef.current) {
+                messagesContainerRef.current.scrollTo({
+                  top: messagesContainerRef.current.scrollHeight,
+                  behavior: 'smooth'
+                });
+              }
+            });
+          } else {
+            setShowNewMessageAlert(true);
+            // 3秒後にアラートを非表示
+            setTimeout(() => {
+              setShowNewMessageAlert(false);
+            }, 3000);
+          }
         }
       )
       .subscribe();
@@ -273,18 +290,23 @@ export default function Chats() {
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [channelName, addMessageIfNotExists]);
+  }, [channelName, addMessageIfNotExists, isNearBottom]);
 
   const onSubmitNewMessage = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (inputText === "" || !userID) return;
 
     try {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select()
-        .eq("id", userID)
-        .single();
+        .select('*')
+        .eq('id', userID)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('プロフィール取得エラー:', profileError);
+        throw new Error('プロフィールの取得に失敗しました');
+      }
 
       if (!profile) {
         alert("投稿前にユーザ名を設定してください。")
@@ -314,39 +336,36 @@ export default function Chats() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-40px)]">
+    <div className="flex h-[calc(100vh-40px)] bg-chat-bg">
       <SideBar profiles={profiles} setProfiles={setProfiles} handleClick={() => {}} />
       <div className="flex-1 flex flex-col">
-        <div className="p-4 border-b">
+        <div className="p-4 border-b bg-chat-bg">
           <h1 className="text-2xl font-bold">{channelName}</h1>
         </div>
         <div 
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto p-4 flex flex-col"
+          className="flex-1 overflow-y-auto p-4 flex flex-col bg-chat-bg"
           onScroll={handleScroll}
         >
           {isLoading ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-2">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                <span className="text-gray-500">メッセージを読み込み中...</span>
-              </div>
+            <div className="flex-1 relative">
+              <Loading />
             </div>
           ) : (
             <>
               {isLoadingPrev && (
-                <div className="sticky top-0 bg-white/80 backdrop-blur-sm py-2 z-10">
+                <div className="sticky top-0 bg-chat-bg/80 backdrop-blur-sm py-2 z-10">
                   <div className="flex justify-center">
                     <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                      <span className="text-sm text-gray-500">過去のメッセージを読み込み中...</span>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-chat-bg"></div>
+                      <span className="text-sm text-gray-700">過去のメッセージを読み込み中...</span>
                     </div>
                   </div>
                 </div>
               )}
               {showNewMessageAlert && (
                 <div 
-                  className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-full cursor-pointer shadow-lg hover:bg-blue-600 transition-colors"
+                  className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-chat-bg text-gray-700 px-4 py-2 rounded-full cursor-pointer shadow-lg hover:bg-chat-bg/80 transition-colors"
                   onClick={() => {
                     setShowNewMessageAlert(false);
                     requestAnimationFrame(() => {
@@ -370,19 +389,21 @@ export default function Chats() {
             </>
           )}
         </div>
-        <form className="p-2 border-t" onSubmit={onSubmitNewMessage}>
+        <form className="p-2 border-t bg-chat-bg" onSubmit={onSubmitNewMessage}>
           <div className="flex gap-2">
-            <textarea
-              className="flex-1 p-2 border rounded-lg resize-none"
-              rows={2}
-              placeholder="メッセージを入力..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-            />
+            <div className="flex-1">
+              <textarea
+                className="w-full p-2 border rounded-lg resize-none bg-input-bg"
+                rows={2}
+                placeholder="メッセージを入力..."
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+              />
+            </div>
             <button
               type="submit"
               disabled={inputText === ""}
-              className="px-3 py-1.5 bg-blue-500 text-white rounded-lg disabled:opacity-50 text-sm"
+              className="px-3 py-1.5 bg-send-button text-gray-700 rounded-lg disabled:opacity-50 text-sm hover:bg-send-button/80 transition-colors"
             >
               送信
             </button>

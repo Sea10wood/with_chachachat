@@ -66,7 +66,7 @@ export default function ProfileEdit() {
       const fileSize = file.size / 1024 / 1024 // MBに変換
 
       if (fileSize > 2) {
-        throw new Error('ファイルサイズは2MB以下にしてください')
+        throw new Error('ファイルサイズは1MB以下にしてください')
       }
 
       const { data: { user } } = await supabase.auth.getUser()

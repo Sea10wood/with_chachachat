@@ -39,6 +39,20 @@ export default function ChatUI(props: Props) {
   const isCurrentUser = currentUserId === chatData.uid
   const isAIResponse = chatData.is_ai_response
 
+  // メッセージ内の@meerchatをハイライト表示する関数
+  const highlightMentions = (text: string) => {
+    const parts = text.split(/(@meerchat)/g);
+    return parts.map((part, i) => 
+      part === '@meerchat' ? (
+        <span key={i} className="bg-ai-message/80 px-1 rounded font-medium">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
+
   return (
     <div className={`flex gap-2 mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
       {!isCurrentUser && (
@@ -53,8 +67,14 @@ export default function ChatUI(props: Props) {
           />
         </div>
       )}
-      <div className={`max-w-[70%] ${isCurrentUser ? 'bg-blue-500 text-white' : 'bg-gray-100'} rounded-lg p-3`}>
-        <p className="text-sm">{chatData.message}</p>
+      <div className={`max-w-[70%] ${
+        isAIResponse 
+          ? 'bg-ai-message text-gray-800'
+          : isCurrentUser 
+            ? 'bg-my-message text-gray-800' 
+            : 'bg-other-message text-gray-800'
+      } rounded-lg p-3`}>
+        <p className="text-sm">{highlightMentions(chatData.message)}</p>
       </div>
       {isCurrentUser && (
         <div className="w-8 h-8 relative">
