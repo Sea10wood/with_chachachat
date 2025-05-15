@@ -58,7 +58,7 @@ export default function ChatUI(props: Props) {
       {!isCurrentUser && (
         <div className="w-8 h-8 relative">
           <Image
-            src={isAIResponse ? "/ai.png" : (profile?.avatar_url || '/user.png')}
+            src={isAIResponse ? "/ai.webp" : (profile?.avatar_url || '/user.webp')}
             alt={isAIResponse ? "AI" : (profile?.name || 'User')}
             fill
             className="rounded-full object-cover"
@@ -79,7 +79,7 @@ export default function ChatUI(props: Props) {
       {isCurrentUser && (
         <div className="w-8 h-8 relative">
           <Image
-            src={profile?.avatar_url || '/user.png'}
+            src={profile?.avatar_url || '/user.webp'}
             alt={profile?.name || 'User'}
             fill
             className="rounded-full object-cover"

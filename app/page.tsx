@@ -1,18 +1,57 @@
-import ThreadLink from "@/components/threadLink";
+"use client"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { Database } from "@/types/supabasetype"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import Image from "next/image"
 
+export default function Home() {
+  const supabase = createClientComponentClient<Database>()
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
 
-export default async function Index() {
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error checking user:', error)
+        setIsLoading(false)
+      }
+    }
+
+    checkUser()
+  }, [supabase.auth])
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-chat-bg">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-700"></div>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex-1 w-full flex flex-col items-center">
-      <h1 className="text-3xl font-bold pt-6 pb-10">with_chachachat!</h1>
-      <ul>
-        <ThreadLink channelName='thread1' linkName='スレッド1'></ThreadLink>
-        <ThreadLink channelName='thread2' linkName='スレッド2'></ThreadLink>
-        <ThreadLink channelName='thread3' linkName='スレッド3'></ThreadLink>
-        <ThreadLink channelName='thread4' linkName='スレッド4'></ThreadLink>
-        <ThreadLink channelName='thread5' linkName='スレッド5'></ThreadLink>
-      </ul>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-chat-bg">
+      <div className="relative w-64 h-64 mb-8">
+        <Image
+          src="/meerchat.webp"
+          alt="MeerChat Logo"
+          fill
+          style={{ objectFit: 'contain' }}
+          priority
+        />
+      </div>
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">ようこそ!</h1>
+        <button
+          onClick={() => router.push('/chats')}
+          className="px-6 py-2 bg-send-button text-gray-700 rounded-lg hover:bg-send-button/80 transition-colors"
+        >
+          話そう!おだやかに
+        </button>
+      </div>
     </div>
   )
 }
