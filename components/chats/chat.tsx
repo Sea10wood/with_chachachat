@@ -14,6 +14,15 @@ export default function ChatUI(props: Props) {
   const { chatData, index } = props
   const supabase = createClientComponentClient()
   const [profile, setProfile] = useState<Database["public"]["Tables"]["profiles"]["Row"] | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setCurrentUserId(user?.id || null)
+    }
+    getCurrentUser()
+  }, [])
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -27,13 +36,16 @@ export default function ChatUI(props: Props) {
     fetchProfile()
   }, [chatData.uid])
 
+  const isCurrentUser = currentUserId === chatData.uid
+  const isAIResponse = chatData.is_ai_response
+
   return (
-    <div className={`flex gap-2 mb-4 ${chatData.is_ai_response ? 'justify-start' : 'justify-end'}`}>
-      {chatData.is_ai_response && (
+    <div className={`flex gap-2 mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+      {!isCurrentUser && (
         <div className="w-8 h-8 relative">
           <Image
-            src="/ai.png"
-            alt="AI"
+            src={isAIResponse ? "/ai.png" : (profile?.avatar_url || '/user.png')}
+            alt={isAIResponse ? "AI" : (profile?.name || 'User')}
             fill
             className="rounded-full object-cover"
             sizes="32px"
@@ -41,14 +53,14 @@ export default function ChatUI(props: Props) {
           />
         </div>
       )}
-      <div className={`max-w-[70%] ${chatData.is_ai_response ? 'bg-gray-100' : 'bg-blue-500 text-white'} rounded-lg p-3`}>
+      <div className={`max-w-[70%] ${isCurrentUser ? 'bg-blue-500 text-white' : 'bg-gray-100'} rounded-lg p-3`}>
         <p className="text-sm">{chatData.message}</p>
       </div>
-      {!chatData.is_ai_response && profile && (
+      {isCurrentUser && (
         <div className="w-8 h-8 relative">
           <Image
-            src={profile.avatar_url || '/user.png'}
-            alt={profile.name || 'User'}
+            src={profile?.avatar_url || '/user.png'}
+            alt={profile?.name || 'User'}
             fill
             className="rounded-full object-cover"
             sizes="32px"

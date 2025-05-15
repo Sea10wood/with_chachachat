@@ -167,7 +167,7 @@ export default function Chats() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-[calc(100vh-40px)]">
       <SideBar profiles={profiles} setProfiles={setProfiles} handleClick={handleClick} />
       <div className="flex-1 flex flex-col">
         <div className="p-4 border-b">
