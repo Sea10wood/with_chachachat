@@ -6,58 +6,57 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
       Chats: {
         Row: {
           id: string
-          created_at: string | null
-          message: string | null
-          uid: string | null
+          created_at: string
+          message: string
+          uid: string
+          channel: string
           is_ai_response: boolean
           parent_message_id: string | null
         }
         Insert: {
           id?: string
-          created_at?: string | null
-          message?: string | null
-          uid?: string | null
+          created_at?: string
+          message: string
+          uid: string
+          channel: string
           is_ai_response?: boolean
           parent_message_id?: string | null
         }
         Update: {
           id?: string
-          created_at?: string | null
-          message?: string | null
-          uid?: string | null
+          created_at?: string
+          message?: string
+          uid?: string
+          channel?: string
           is_ai_response?: boolean
           parent_message_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "Chats_uid_fkey"
-            columns: ["uid"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       profiles: {
         Row: {
           id: string
           name: string
+          avatar_url: string | null
+          updated_at: string | null
         }
         Insert: {
           id: string
           name: string
+          avatar_url?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: string
           name?: string
+          avatar_url?: string | null
+          updated_at?: string | null
         }
-        Relationships: []
       }
     }
     Views: {
