@@ -28,7 +28,7 @@ const ModalCore = ({ modalType }: Props) => {
   return (
     <>
       <button
-        className="text-gray-600 hover:text-blue-600"
+        className="text-black hover:text-send-button transition-colors duration-200"
         type="button"
         onClick={() => setShowModal(true)}
       >
@@ -38,14 +38,14 @@ const ModalCore = ({ modalType }: Props) => {
         <>
           <div className="fixed inset-0 z-50 flex items-center justify-center w-full md:inset-0 max-h-full bg-black/30">
             <div className="m-auto relative p-4 w-full max-w-md max-h-full">
-              <div className="relative bg-white rounded-lg shadow">
-                <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                  <h3 className="text-xl font-semibold text-gray-900">
+              <div className="relative bg-chat-bg rounded-lg shadow">
+                <div className="flex items-center justify-between p-4 md:p-5 border-b border-send-button rounded-t">
+                  <h3 className="text-xl font-semibold text-black">
                     {title}
                   </h3>
                   <button
                     type="button"
-                    className="end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                    className="end-2.5 text-black bg-transparent hover:bg-send-button/20 hover:text-loading-color rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center transition-colors duration-200"
                     data-modal-hide="authentication-modal"
                     onClick={() => setShowModal(false)}
                   >
