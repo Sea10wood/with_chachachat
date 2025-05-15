@@ -3,16 +3,17 @@ import { Dispatch, SetStateAction } from "react";
 interface ErrorModalProps {
   message: string;
   showModal: Dispatch<SetStateAction<boolean>>;
+  isError?: boolean;
 }
 
-export default function ErrorModal({ message, showModal }: ErrorModalProps) {
+export default function ErrorModal({ message, showModal, isError = true }: ErrorModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center w-full md:inset-0 max-h-full bg-black/30">
       <div className="m-auto relative p-4 w-full max-w-md max-h-full">
         <div className="relative bg-chat-bg rounded-lg shadow">
           <div className="flex items-center justify-between p-4 md:p-5 border-b border-send-button rounded-t">
-            <h3 className="text-xl font-semibold text-loading-color">
-              エラー
+            <h3 className={`text-xl font-semibold ${isError ? "text-loading-color" : "text-black"}`}>
+              {isError ? "エラー" : "完了"}
             </h3>
             <button
               type="button"
