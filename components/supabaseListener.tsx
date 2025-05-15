@@ -1,6 +1,7 @@
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import Navigation from "./navigation"
+import { Session } from '@supabase/supabase-js'
 
 const SupabaseListener = async () => {
     const supabase = createServerComponentClient({ cookies })
