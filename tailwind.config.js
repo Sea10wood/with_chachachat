@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'black-rgba': 'rgba(0, 0, 0, 0.3)',
+        'black': '#262626',
         'global-bg': '#fef0d2',
         'chat-bg': '#fdedc9',
         'sidebar-bg': '#fde1bf',

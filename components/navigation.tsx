@@ -6,24 +6,26 @@ import { usePathname, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import ModalCore from "./modalCore"
 import { ModalType } from "./modal/modalType"
+import { Session } from '@supabase/supabase-js'
 
-export default function Navigation() {
+interface NavigationProps {
+  session: Session | null;
+}
+
+export default function Navigation({ session }: NavigationProps) {
   const supabase = createClientComponentClient()
   const pathname = usePathname()
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
-  const [session, setSession] = useState<any>(null)
 
   useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      setSession(session)
     }
     getSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
     })
 
     return () => subscription.unsubscribe()
@@ -58,7 +60,7 @@ export default function Navigation() {
                   href="/chats"
                   className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                     pathname === "/chats"
-                      ? "border-blue-500 text-gray-900"
+                      ? "border-send-button text-gray-900"
                       : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
                 >
@@ -69,7 +71,7 @@ export default function Navigation() {
                 href="/profile"
                     className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                       pathname === "/profile"
-                        ? "border-blue-500 text-gray-900"
+                        ? "border-send-button text-gray-900"
                         : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                     }`}
               >
@@ -87,7 +89,7 @@ export default function Navigation() {
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
                 <button
                   onClick={() => setIsLogoutModalOpen(true)}
-                  className="text-gray-500 hover:text-gray-700 text-sm font-medium"
+                  className="text-gray-500 hover:text-gray-700 text-sm font-medium hover:text-send-button"
                 >
                   ログアウト
                 </button>
@@ -129,7 +131,7 @@ export default function Navigation() {
               href="/chats"
               className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
                 pathname === "/chats"
-                  ? "bg-blue-50 border-blue-500 text-blue-700"
+                  ? "bg-send-button/10 border-send-button text-gray-700"
                   : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
               }`}
             >
@@ -141,7 +143,7 @@ export default function Navigation() {
                   href="/profile"
                   className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
                     pathname === "/profile"
-                      ? "bg-blue-50 border-blue-500 text-blue-700"
+                      ? "bg-send-button/10 border-send-button text-gray-700"
                       : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
                   }`}
                 >
@@ -179,7 +181,7 @@ export default function Navigation() {
               </button>
               <button
                 onClick={handleSignOut}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-send-button hover:bg-send-button/80 rounded-md"
               >
                 ログアウト
               </button>

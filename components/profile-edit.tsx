@@ -125,8 +125,8 @@ export default function ProfileEdit() {
             />
           </div>
           <div className="flex flex-col items-center gap-2">
-            <label className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-              <span>画像を変更</span>
+            <label className="cursor-pointer bg-send-button text-gray-700 px-4 py-2 rounded-lg hover:bg-send-button/80 transition-colors">
+              <span>画像を選択</span>
               <input
                 type="file"
                 accept="image/*"
@@ -155,7 +155,7 @@ export default function ProfileEdit() {
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+            className="w-full px-4 py-2 bg-send-button text-gray-700 rounded-lg hover:bg-send-button/80 transition-colors"
           >
             保存
           </button>

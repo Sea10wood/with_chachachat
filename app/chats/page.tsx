@@ -339,9 +339,6 @@ export default function Chats() {
     <div className="flex h-[calc(100vh-40px)] bg-chat-bg">
       <SideBar profiles={profiles} setProfiles={setProfiles} handleClick={() => {}} />
       <div className="flex-1 flex flex-col">
-        <div className="p-4 border-b bg-chat-bg">
-          <h1 className="text-2xl font-bold">{channelName}</h1>
-        </div>
         <div 
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto p-4 flex flex-col bg-chat-bg"

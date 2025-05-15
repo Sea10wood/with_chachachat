@@ -17,11 +17,11 @@ export default function SideBar({ profiles, setProfiles, handleClick }: SideBarP
   const [selectedId, setSelectedId] = useState("")
 
   const threads = [
-    { id: "thread1", name: "スレッド1" },
-    { id: "thread2", name: "スレッド2" },
-    { id: "thread3", name: "スレッド3" },
-    { id: "thread4", name: "スレッド4" },
-    { id: "thread5", name: "スレッド5" },
+    { id: 'thread1', name: 'ひとりごと' },
+    { id: 'thread2', name: '連絡' },
+    { id: 'thread3', name: 'ゆるぼ' },
+    { id: 'thread4', name: 'ごはん' },
+    { id: 'thread5', name: '思い出' },
   ]
 
   useEffect(() => {
