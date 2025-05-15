@@ -2,7 +2,7 @@
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/types/supabasetype"
 import { useEffect, useState, useRef, useCallback } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import ChatUI from "@/components/chats/chat"
 import SideBar from "@/components/sidebar"
 import Loading from "@/components/loading"
@@ -14,11 +14,8 @@ const BOTTOM_THRESHOLD = 50;
 export default function Chats() {
   const supabase = createClientComponentClient<Database>()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const channelName = searchParams.get("channel_name");
-  if (!channelName) {
-    console.error("channel_name is missing in the query parameters.");
-    return <div>チャンネル名が指定されていません。</div>;
-  }
 
   const [inputText, setInputText] = useState("")
   const [userID, setUserID] = useState("")
@@ -47,19 +44,12 @@ export default function Chats() {
     return true;
   }, []);
 
-  // メッセージ内の@meerchatをハイライト表示する関数
-  const highlightMentions = (text: string) => {
-    const parts = text.split(/(@meerchat)/g);
-    return parts.map((part, i) => 
-      part === '@meerchat' ? (
-        <span key={i} className="font-bold">
-          {part}
-        </span>
-      ) : (
-        part
-      )
-    );
-  };
+  // チャンネル名が指定されていない場合、デフォルトチャンネルにリダイレクト
+  useEffect(() => {
+    if (!channelName) {
+      router.push('/chats?channel_name=thread1');
+    }
+  }, [channelName, router]);
 
   // スクロール位置の管理
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -292,6 +282,10 @@ export default function Chats() {
     };
   }, [channelName, addMessageIfNotExists, isNearBottom]);
 
+  if (!channelName) {
+    return <Loading />;
+  }
+
   const onSubmitNewMessage = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (inputText === "" || !userID) return;
@@ -339,6 +333,9 @@ export default function Chats() {
     <div className="flex h-[calc(100vh-40px)] bg-chat-bg">
       <SideBar profiles={profiles} setProfiles={setProfiles} handleClick={() => {}} />
       <div className="flex-1 flex flex-col">
+        <div className="p-4 border-b bg-chat-bg">
+          <h1 className="text-2xl font-bold">{channelName}</h1>
+        </div>
         <div 
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto p-4 flex flex-col bg-chat-bg"
