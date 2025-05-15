@@ -3,11 +3,13 @@ import { Dispatch, SetStateAction, useState } from "react";
 import Link from 'next/link';
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import ErrorModal from "./errorModal";
+import { useRouter } from "next/navigation";
 
 export default function SignInForm(props: {
   showModal: Dispatch<SetStateAction<boolean>>;
 }) {
   const { showModal } = props;
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +72,7 @@ export default function SignInForm(props: {
       }
 
       showModal(false);
+      router.push('/profile');
     } catch (error) {
       setError("エラーが発生しました。しばらく時間をおいて再度お試しください");
       setShowErrorModal(true);

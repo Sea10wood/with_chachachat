@@ -4,9 +4,11 @@ import { Database } from "@/types/supabasetype"
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import ErrorModal from "./modal/errorModal";
+import { useRouter } from "next/navigation";
 
 export default function ProfileEdit() {
   const supabase = createClientComponentClient()
+  const router = useRouter()
   const [name, setName] = useState("")
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -21,7 +23,10 @@ export default function ProfileEdit() {
   async function getData() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("ユーザーが見つかりません")
+      if (!user) {
+        router.push('/')
+        return
+      }
 
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -29,8 +34,26 @@ export default function ProfileEdit() {
         .eq('id', user.id)
         .single()
 
-      if (error) throw error
-      if (profile) {
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // プロフィールが存在しない場合は作成
+          const { error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              name: '新しいユーザー',
+              avatar_url: '/user.webp',
+              updated_at: new Date().toISOString()
+            })
+          
+          if (createError) throw createError
+          
+          setName('新しいユーザー')
+          setAvatarUrl('/user.webp')
+        } else {
+          throw error
+        }
+      } else if (profile) {
         setName(profile.name || '')
         setAvatarUrl(profile.avatar_url)
       }
@@ -57,10 +80,13 @@ export default function ProfileEdit() {
 
       if (error) throw error
       setSuccessMessage("プロフィールを更新しました")
+      setError(null)
       setShowErrorModal(true)
+      router.push('/chats')
     } catch (error) {
       console.error('プロフィール更新エラー:', error)
       setError("プロフィールの更新に失敗しました")
+      setSuccessMessage(null)
       setShowErrorModal(true)
     }
   }
@@ -118,10 +144,13 @@ export default function ProfileEdit() {
 
       setAvatarUrl(publicUrl)
       setSuccessMessage("アバターを更新しました")
+      setError(null)
       setShowErrorModal(true)
+      router.push('/chats')
     } catch (error) {
       console.error('アバターアップロードエラー:', error)
       setError("アバターの更新に失敗しました")
+      setSuccessMessage(null)
       setShowErrorModal(true)
     } finally {
       setIsLoading(false)
@@ -183,7 +212,8 @@ export default function ProfileEdit() {
       {showErrorModal && (
         <ErrorModal 
           message={error || successMessage || ""} 
-          showModal={setShowErrorModal} 
+          showModal={setShowErrorModal}
+          isError={!!error}
         />
       )}
     </div>
