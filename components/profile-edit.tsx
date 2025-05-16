@@ -3,12 +3,18 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/types/supabasetype"
 import { useEffect, useState } from "react"
 import Image from "next/image"
+import ErrorModal from "./modal/errorModal";
+import { useRouter } from "next/navigation";
 
 export default function ProfileEdit() {
   const supabase = createClientComponentClient()
+  const router = useRouter()
   const [name, setName] = useState("")
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showErrorModal, setShowErrorModal] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   useEffect(() => {
     getData()
@@ -17,7 +23,10 @@ export default function ProfileEdit() {
   async function getData() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("ユーザーが見つかりません")
+      if (!user) {
+        router.push('/')
+        return
+      }
 
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -25,13 +34,33 @@ export default function ProfileEdit() {
         .eq('id', user.id)
         .single()
 
-      if (error) throw error
-      if (profile) {
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // プロフィールが存在しない場合は作成
+          const { error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              name: '新しいユーザー',
+              avatar_url: '/user.webp',
+              updated_at: new Date().toISOString()
+            })
+          
+          if (createError) throw createError
+          
+          setName('新しいユーザー')
+          setAvatarUrl('/user.webp')
+        } else {
+          throw error
+        }
+      } else if (profile) {
         setName(profile.name || '')
         setAvatarUrl(profile.avatar_url)
       }
     } catch (error) {
       console.error('プロフィール取得エラー:', error)
+      setError("プロフィールの取得に失敗しました")
+      setShowErrorModal(true)
     }
   }
 
@@ -43,14 +72,22 @@ export default function ProfileEdit() {
 
       const { error } = await supabase
         .from('profiles')
-        .update({ name })
+        .update({ 
+          name,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', user.id)
 
       if (error) throw error
-      alert('プロフィールを更新しました')
+      setSuccessMessage("プロフィールを更新しました")
+      setError(null)
+      setShowErrorModal(true)
+      router.push('/chats')
     } catch (error) {
       console.error('プロフィール更新エラー:', error)
-      alert('プロフィールの更新に失敗しました')
+      setError("プロフィールの更新に失敗しました")
+      setSuccessMessage(null)
+      setShowErrorModal(true)
     }
   }
 
@@ -65,7 +102,7 @@ export default function ProfileEdit() {
       const fileExt = file.name.split('.').pop()
       const fileSize = file.size / 1024 / 1024 // MBに変換
 
-      if (fileSize > 2) {
+      if (fileSize > 1) {
         throw new Error('ファイルサイズは1MB以下にしてください')
       }
 
@@ -84,7 +121,10 @@ export default function ProfileEdit() {
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
 
       if (uploadError) throw uploadError
 
@@ -94,16 +134,24 @@ export default function ProfileEdit() {
 
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
+        .update({ 
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', user.id)
 
       if (updateError) throw updateError
 
       setAvatarUrl(publicUrl)
-      alert('アバターを更新しました')
+      setSuccessMessage("アバターを更新しました")
+      setError(null)
+      setShowErrorModal(true)
+      router.push('/chats')
     } catch (error) {
       console.error('アバターアップロードエラー:', error)
-      alert('アバターの更新に失敗しました')
+      setError("アバターの更新に失敗しました")
+      setSuccessMessage(null)
+      setShowErrorModal(true)
     } finally {
       setIsLoading(false)
     }
@@ -111,12 +159,12 @@ export default function ProfileEdit() {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-xl font-bold mb-4">プロフィール編集</h1>
-      <div className="bg-white rounded-lg shadow p-6">
+      <h1 className="text-xl font-bold mb-4 text-black">プロフィール編集</h1>
+      <div className="bg-chat-bg rounded-lg shadow p-6">
         <div className="flex flex-col items-center mb-8">
           <div className="relative w-48 h-48 mb-4">
             <Image
-              src={avatarUrl || '/user.png'}
+              src={avatarUrl || '/user.webp'}
               alt="プロフィール画像"
               fill
               className="rounded-full object-cover"
@@ -125,7 +173,7 @@ export default function ProfileEdit() {
             />
           </div>
           <div className="flex flex-col items-center gap-2">
-            <label className="cursor-pointer bg-send-button text-gray-700 px-4 py-2 rounded-lg hover:bg-send-button/80 transition-colors">
+            <label className="cursor-pointer bg-send-button text-black px-4 py-2 rounded-lg hover:bg-loading-color transition-colors">
               <span>画像を選択</span>
               <input
                 type="file"
@@ -135,13 +183,13 @@ export default function ProfileEdit() {
                 className="hidden"
               />
             </label>
-            {isLoading && <p className="text-sm text-gray-500">アップロード中...</p>}
+            {isLoading && <p className="text-sm text-black/70">アップロード中...</p>}
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="name" className="block text-sm font-medium text-black mb-1">
               ユーザー名
             </label>
             <input
@@ -149,18 +197,25 @@ export default function ProfileEdit() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-input-bg border border-send-button text-black rounded-md focus:outline-none focus:ring-2 focus:ring-send-button"
               required
             />
           </div>
           <button
             type="submit"
-            className="w-full px-4 py-2 bg-send-button text-gray-700 rounded-lg hover:bg-send-button/80 transition-colors"
+            className="w-full px-4 py-2 bg-send-button text-black rounded-lg hover:bg-loading-color transition-colors"
           >
             保存
           </button>
         </form>
       </div>
+      {showErrorModal && (
+        <ErrorModal 
+          message={error || successMessage || ""} 
+          showModal={setShowErrorModal}
+          isError={!!error}
+        />
+      )}
     </div>
   )
 } 

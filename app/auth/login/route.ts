@@ -9,12 +9,33 @@ export async function POST(request: Request) {
     const password = String(formData.get('password'))
     const supabase = createRouteHandlerClient({ cookies })
 
-    await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
     })
 
-    return NextResponse.redirect(requestUrl.origin + '/profile', {
+    if (error) {
+        return NextResponse.redirect(`${requestUrl.origin}/?error=${encodeURIComponent(error.message)}`)
+    }
+
+    // プロフィールデータの作成
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+                id: user.id,
+                name: '新しいユーザー',
+                avatar_url: '/user.webp',
+                updated_at: new Date().toISOString()
+            })
+        
+        if (profileError) {
+            console.error('プロフィール作成エラー:', profileError)
+        }
+    }
+
+    return NextResponse.redirect(`${requestUrl.origin}/profile`, {
         status: 301,
     })
 }
