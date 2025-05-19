@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import ChatUI from "@/components/chats/chat"
 import SideBar from "@/components/sidebar"
 import Loading from "@/components/loading"
+import { ComponentWrapper } from "@/components/ComponentWrapper"
 
 const MESSAGE_LIMIT = 20;
 const SCROLL_THRESHOLD = 50;
@@ -282,8 +283,43 @@ export default function Chats() {
     };
   }, [channelName, addMessageIfNotExists, isNearBottom]);
 
+  // iframeの高さを親ウィンドウに通知
+  useEffect(() => {
+    if (window.parent !== window) {
+      const updateHeight = () => {
+        const height = document.body.scrollHeight;
+        window.parent?.postMessage(
+          {
+            type: "UPDATE_HEIGHT",
+            height: height
+          },
+          "http://localhost:3000"
+        );
+      };
+
+      // 初期高さの通知
+      updateHeight();
+
+      // リサイズイベントの監視
+      window.addEventListener('resize', updateHeight);
+
+      // メッセージが追加されたときの高さ更新
+      const observer = new ResizeObserver(updateHeight);
+      observer.observe(document.body);
+
+      return () => {
+        window.removeEventListener('resize', updateHeight);
+        observer.disconnect();
+      };
+    }
+  }, []);
+
   if (!channelName) {
-    return <Loading />;
+    return (
+      <ComponentWrapper componentName="ChatsPage" zIndex={1}>
+        <Loading />
+      </ComponentWrapper>
+    );
   }
 
   const onSubmitNewMessage = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -322,6 +358,24 @@ export default function Chats() {
         throw new Error('メッセージ送信に失敗しました');
       }
 
+      // iframe内でのみ親アプリケーションに通知を送信
+      if (window.parent !== window) {
+        console.log('iframe内でメッセージを送信:', {
+          type: "CHAT_SUBMITTED",
+          message: inputText
+        });
+
+        window.parent?.postMessage(
+          {
+            type: "CHAT_SUBMITTED",
+            message: inputText,
+          },
+          "http://localhost:3000"
+        );
+      } else {
+        console.log('スタンドアロンモード: メッセージ送信をスキップ');
+      }
+
       setInputText("");
     } catch (error) {
       console.error("エラー:", error);
@@ -330,80 +384,82 @@ export default function Chats() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-40px)] bg-chat-bg">
-      <SideBar profiles={profiles} setProfiles={setProfiles} handleClick={() => {}} />
-      <div className="flex-1 flex flex-col">
-        <div className="p-4 border-b bg-chat-bg">
-          <h1 className="text-2xl font-bold">{channelName}</h1>
-        </div>
-        <div 
-          ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto p-4 flex flex-col bg-chat-bg"
-          onScroll={handleScroll}
-        >
-          {isLoading ? (
-            <div className="flex-1 relative">
-              <Loading />
-            </div>
-          ) : (
-            <>
-              {isLoadingPrev && (
-                <div className="sticky top-0 bg-chat-bg/80 backdrop-blur-sm py-2 z-10">
-                  <div className="flex justify-center">
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-chat-bg"></div>
-                      <span className="text-sm text-gray-700">過去のメッセージを読み込み中...</span>
+    <ComponentWrapper componentName="ChatsPage" zIndex={1}>
+      <div className="flex h-[calc(100vh-40px)] bg-chat-bg">
+        <SideBar profiles={profiles} setProfiles={setProfiles} handleClick={() => {}} />
+        <div className="flex-1 flex flex-col">
+          <div className="p-4 border-b bg-chat-bg">
+            <h1 className="text-2xl font-bold">{channelName}</h1>
+          </div>
+          <div 
+            ref={messagesContainerRef}
+            className="flex-1 overflow-y-auto p-4 flex flex-col bg-chat-bg"
+            onScroll={handleScroll}
+          >
+            {isLoading ? (
+              <div className="flex-1 relative">
+                <Loading />
+              </div>
+            ) : (
+              <>
+                {isLoadingPrev && (
+                  <div className="sticky top-0 bg-chat-bg/80 backdrop-blur-sm py-2 z-10">
+                    <div className="flex justify-center">
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-chat-bg"></div>
+                        <span className="text-sm text-gray-700">過去のメッセージを読み込み中...</span>
+                      </div>
                     </div>
                   </div>
+                )}
+                {showNewMessageAlert && (
+                  <div 
+                    className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-chat-bg text-gray-700 px-4 py-2 rounded-full cursor-pointer shadow-lg hover:bg-chat-bg/80 transition-colors"
+                    onClick={() => {
+                      setShowNewMessageAlert(false);
+                      requestAnimationFrame(() => {
+                        if (messagesContainerRef.current) {
+                          messagesContainerRef.current.scrollTo({
+                            top: messagesContainerRef.current.scrollHeight,
+                            behavior: 'smooth'
+                          });
+                        }
+                      });
+                    }}
+                  >
+                    新しいメッセージがあります
+                  </div>
+                )}
+                <div className="space-y-4">
+                  {messages.map((message, index) => (
+                    <ChatUI chatData={message} index={index} key={message.id || index} />
+                  ))}
                 </div>
-              )}
-              {showNewMessageAlert && (
-                <div 
-                  className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-chat-bg text-gray-700 px-4 py-2 rounded-full cursor-pointer shadow-lg hover:bg-chat-bg/80 transition-colors"
-                  onClick={() => {
-                    setShowNewMessageAlert(false);
-                    requestAnimationFrame(() => {
-                      if (messagesContainerRef.current) {
-                        messagesContainerRef.current.scrollTo({
-                          top: messagesContainerRef.current.scrollHeight,
-                          behavior: 'smooth'
-                        });
-                      }
-                    });
-                  }}
-                >
-                  新しいメッセージがあります
-                </div>
-              )}
-              <div className="space-y-4">
-                {messages.map((message, index) => (
-                  <ChatUI chatData={message} index={index} key={message.id || index} />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-        <form className="p-2 border-t bg-chat-bg" onSubmit={onSubmitNewMessage}>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <textarea
-                className="w-full p-2 border rounded-lg resize-none bg-input-bg"
-                rows={2}
-                placeholder="メッセージを入力..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={inputText === ""}
-              className="px-3 py-1.5 bg-send-button text-gray-700 rounded-lg disabled:opacity-50 text-sm hover:bg-send-button/80 transition-colors"
-            >
-              送信
-            </button>
+              </>
+            )}
           </div>
-        </form>
+          <form className="p-2 border-t bg-chat-bg" onSubmit={onSubmitNewMessage}>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <textarea
+                  className="w-full p-2 border rounded-lg resize-none bg-input-bg"
+                  rows={2}
+                  placeholder="メッセージを入力..."
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={inputText === ""}
+                className="px-3 py-1.5 bg-send-button text-gray-700 rounded-lg disabled:opacity-50 text-sm hover:bg-send-button/80 transition-colors"
+              >
+                送信
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </ComponentWrapper>
   )
 }

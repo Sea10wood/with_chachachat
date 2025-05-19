@@ -1,0 +1,177 @@
+[
+  {
+    "path": "tailwind.config.js",
+    "name": "tailwind.config",
+    "level": 0
+  },
+  {
+    "path": "postcss.config.js",
+    "name": "postcss.config",
+    "level": 0
+  },
+  {
+    "path": "next.config.js",
+    "name": "next.config",
+    "level": 0
+  },
+  {
+    "path": "middleware.ts",
+    "name": "middleware",
+    "level": 0
+  },
+  {
+    "path": "tools/generateStructure.ts",
+    "name": "generateStructure",
+    "level": 1
+  },
+  {
+    "path": "types/supabasetype.ts",
+    "name": "supabasetype",
+    "level": 1
+  },
+  {
+    "path": "components/threadLink.tsx",
+    "name": "threadLink",
+    "level": 1
+  },
+  {
+    "path": "components/supabaseListener.tsx",
+    "name": "supabaseListener",
+    "level": 1
+  },
+  {
+    "path": "components/sidebar.tsx",
+    "name": "sidebar",
+    "level": 1
+  },
+  {
+    "path": "components/profile-edit.tsx",
+    "name": "profile-edit",
+    "level": 1
+  },
+  {
+    "path": "components/pageExports.ts",
+    "name": "pageExports",
+    "level": 1
+  },
+  {
+    "path": "components/navigation.tsx",
+    "name": "navigation",
+    "level": 1
+  },
+  {
+    "path": "components/modalCore.tsx",
+    "name": "modalCore",
+    "level": 1
+  },
+  {
+    "path": "components/loading.tsx",
+    "name": "loading",
+    "level": 1
+  },
+  {
+    "path": "components/date.tsx",
+    "name": "date",
+    "level": 1
+  },
+  {
+    "path": "components/ComponentWrapper.tsx",
+    "name": "ComponentWrapper",
+    "level": 1
+  },
+  {
+    "path": "app/page.tsx",
+    "name": "page",
+    "level": 1
+  },
+  {
+    "path": "app/layout.tsx",
+    "name": "layout",
+    "level": 1
+  },
+  {
+    "path": "utils/supabase/supabase.ts",
+    "name": "supabase",
+    "level": 2
+  },
+  {
+    "path": "components/modal/signupForm.tsx",
+    "name": "signupForm",
+    "level": 2
+  },
+  {
+    "path": "components/modal/signinForm.tsx",
+    "name": "signinForm",
+    "level": 2
+  },
+  {
+    "path": "components/modal/modalType.ts",
+    "name": "modalType",
+    "level": 2
+  },
+  {
+    "path": "components/modal/errorModal.tsx",
+    "name": "errorModal",
+    "level": 2
+  },
+  {
+    "path": "components/chats/chat.tsx",
+    "name": "chat",
+    "level": 2
+  },
+  {
+    "path": "app/resetPassword/page.tsx",
+    "name": "page",
+    "level": 2
+  },
+  {
+    "path": "app/profile/page.tsx",
+    "name": "page",
+    "level": 2
+  },
+  {
+    "path": "app/chats/page.tsx",
+    "name": "page",
+    "level": 2
+  },
+  {
+    "path": "app/components/MessageHandler.tsx",
+    "name": "MessageHandler",
+    "level": 2
+  },
+  {
+    "path": "app/resetPassword/inputPassword/page.tsx",
+    "name": "page",
+    "level": 3
+  },
+  {
+    "path": "app/auth/logout/route.ts",
+    "name": "route",
+    "level": 3
+  },
+  {
+    "path": "app/auth/login/route.ts",
+    "name": "route",
+    "level": 3
+  },
+  {
+    "path": "app/auth/callback/route.ts",
+    "name": "route",
+    "level": 3
+  },
+  {
+    "path": "app/api/profiles/route.ts",
+    "name": "route",
+    "level": 3
+  },
+  {
+    "path": "app/api/chat/route.ts",
+    "name": "route",
+    "level": 3
+  },
+  {
+    "path": "app/api/login/route.ts",
+    "name": "route",
+    "level": 3
+  }
+]
