@@ -65,7 +65,7 @@ export default function ChatUI(props: Props) {
     const parts = text.split(/(@meerchat)/g);
     return parts.map((part, i) => 
       part === '@meerchat' ? (
-        <span key={i} className="bg-ai-message/80 px-1 rounded font-medium">
+        <span key={i} className="bg-ai-message/80 dark:bg-ai-message/40 px-1 rounded font-medium">
           {part}
         </span>
       ) : (
@@ -92,16 +92,16 @@ export default function ChatUI(props: Props) {
             />
           </div>
           {!isAIResponse && (
-            <p className="text-[8px] text-gray-600">{profile?.name || 'ユーザー'}</p>
+            <p className="text-[8px] text-gray-600 dark:text-gray-400">{profile?.name || 'ユーザー'}</p>
           )}
         </div>
       )}
       <div className={`max-w-[70%] ${
         isAIResponse 
-          ? 'bg-ai-message text-gray-800'
+          ? 'bg-ai-message dark:bg-ai-message/40 text-gray-800 dark:text-global-bg'
           : isCurrentUser 
-            ? 'bg-my-message text-gray-800' 
-            : 'bg-other-message text-gray-800'
+            ? 'bg-my-message dark:bg-my-message/40 text-gray-800 dark:text-global-bg' 
+            : 'bg-other-message dark:bg-other-message/40 text-gray-800 dark:text-global-bg'
       } rounded-lg p-3`}>
         <p className="text-sm">{highlightMentions(chatData.message)}</p>
       </div>

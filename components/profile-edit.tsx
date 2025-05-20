@@ -157,10 +157,17 @@ export default function ProfileEdit() {
     }
   }
 
+  const handleCloseModal = () => {
+    setShowErrorModal(false);
+    if (successMessage) {
+      router.push('/chats');
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-xl font-bold mb-4 text-black">プロフィール編集</h1>
-      <div className="bg-chat-bg rounded-lg shadow p-6">
+      <h1 className="text-xl font-bold mb-4 text-black dark:text-global-bg">プロフィール編集</h1>
+      <div className="bg-chat-bg dark:bg-black/20 rounded-lg shadow p-6">
         <div className="flex flex-col items-center mb-8">
           <div className="relative w-48 h-48 mb-4">
             <Image
@@ -178,7 +185,7 @@ export default function ProfileEdit() {
             />
           </div>
           <div className="flex flex-col items-center gap-2">
-            <label className="cursor-pointer bg-send-button text-black px-4 py-2 rounded-lg hover:bg-loading-color transition-colors">
+            <label className="cursor-pointer bg-send-button text-black dark:text-global-bg px-4 py-2 rounded-lg hover:bg-loading-color transition-colors">
               <span>画像を選択</span>
               <input
                 type="file"
@@ -188,36 +195,37 @@ export default function ProfileEdit() {
                 className="hidden"
               />
             </label>
-            {isLoading && <p className="text-sm text-black/70">アップロード中...</p>}
+            {isLoading && <p className="text-sm text-black/70 dark:text-global-bg/70">アップロード中...</p>}
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-black mb-1">
+            <label htmlFor="name" className="block text-sm font-medium text-black dark:text-global-bg mb-1">
               ユーザー名
             </label>
             <input
-              id="name"
               type="text"
+              id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 bg-input-bg border border-send-button text-black rounded-md focus:outline-none focus:ring-2 focus:ring-send-button"
+              className="w-full p-2 border rounded-lg bg-white dark:bg-black/40 text-black dark:text-global-bg placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-send-button/50"
+              placeholder="ユーザー名を入力"
               required
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-send-button text-black py-2 px-4 rounded-lg hover:bg-loading-color transition-colors"
+            className="w-full bg-send-button text-black dark:text-global-bg py-2 rounded-lg hover:bg-send-button/80 transition-colors"
           >
-            更新
+            保存
           </button>
         </form>
       </div>
       {showErrorModal && (
         <ErrorModal
           message={error || successMessage || ""}
-          showModal={setShowErrorModal}
+          showModal={handleCloseModal}
           isError={!!error}
         />
       )}
