@@ -32,9 +32,6 @@ export async function middleware(req: NextRequest) {
     }
 
     // /auth/loginへのアクセスを/auth/signinにリダイレクト
-    if (req.nextUrl.pathname === "/auth/login") {
-        return NextResponse.redirect(new URL("/auth/signin", req.url))
-    }
 
     return res
 }
@@ -43,7 +40,8 @@ export const config = {
     matcher: [
         "/profile/:path*",
         "/settings/:path*",
+        "/chats/:path*",
         "/auth/:path*",
-        "/auth/login",
+        "/auth/signin",
     ],
 }
