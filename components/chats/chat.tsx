@@ -1,9 +1,10 @@
 "use client"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/types/supabasetype"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import DateFormatter from '@/components/date';
 import Image from 'next/image'
+import { gsap } from 'gsap'
 
 interface Props {
   chatData: Database["public"]["Tables"]["Chats"]["Row"],
@@ -15,6 +16,7 @@ export default function ChatUI(props: Props) {
   const supabase = createClientComponentClient()
   const [profile, setProfile] = useState<Database["public"]["Tables"]["profiles"]["Row"] | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const messageRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -36,6 +38,25 @@ export default function ChatUI(props: Props) {
     fetchProfile()
   }, [chatData.uid])
 
+  useEffect(() => {
+    if (messageRef.current) {
+      gsap.fromTo(
+        messageRef.current,
+        {
+          opacity: 0,
+          y: 20,
+        },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          delay: index * 0.1, // メッセージごとに少しずつ遅延を付ける
+          ease: "power2.out"
+        }
+      )
+    }
+  }, [index])
+
   const isCurrentUser = currentUserId === chatData.uid
   const isAIResponse = chatData.is_ai_response
 
@@ -54,17 +75,25 @@ export default function ChatUI(props: Props) {
   };
 
   return (
-    <div className={`flex gap-2 mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+    <div 
+      ref={messageRef}
+      className={`flex gap-2 mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'} opacity-0`}
+    >
       {!isCurrentUser && (
-        <div className="w-8 h-8 relative">
-          <Image
-            src={isAIResponse ? "/ai.webp" : (profile?.avatar_url || '/user.webp')}
-            alt={isAIResponse ? "AI" : (profile?.name || 'User')}
-            fill
-            className="rounded-full object-cover"
-            sizes="32px"
-            priority={index < 5}
-          />
+        <div className="flex flex-col items-center">
+          <div className="w-8 h-8 relative mb-1">
+            <Image
+              src={isAIResponse ? "/ai.webp" : (profile?.avatar_url || '/user.webp')}
+              alt={isAIResponse ? "AI" : (profile?.name || 'User')}
+              fill
+              className="rounded-full object-cover"
+              sizes="32px"
+              priority={index < 5}
+            />
+          </div>
+          {!isAIResponse && (
+            <p className="text-[8px] text-gray-600">{profile?.name || 'ユーザー'}</p>
+          )}
         </div>
       )}
       <div className={`max-w-[70%] ${

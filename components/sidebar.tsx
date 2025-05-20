@@ -2,6 +2,7 @@
 import { Database } from "@/types/supabasetype"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"]
 
@@ -9,9 +10,10 @@ interface SideBarProps {
   profiles: Profile[];
   setProfiles: (profiles: Profile[]) => void;
   handleClick: (id: string) => void;
+  user: any;
 }
 
-export default function SideBar({ profiles, setProfiles, handleClick }: SideBarProps) {
+export default function SideBar({ profiles, setProfiles, handleClick, user }: SideBarProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedId, setSelectedId] = useState("")
@@ -37,8 +39,8 @@ export default function SideBar({ profiles, setProfiles, handleClick }: SideBarP
   }
 
   return (
-    <div className="w-64 border-r bg-sidebar-bg h-full overflow-y-auto">
-      <div className="p-4">
+    <div className="w-64 border-r bg-sidebar-bg h-full overflow-y-auto flex flex-col">
+      <div className="p-4 flex-grow">
         <h2 className="text-xl font-bold mb-4 text-black">スレッド一覧</h2>
         <div className="space-y-2">
           {threads.map((thread) => (
