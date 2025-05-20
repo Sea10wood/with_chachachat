@@ -5,6 +5,8 @@ import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
 import { Session } from '@supabase/supabase-js'
+import { useTheme } from 'next-themes'
+import { Moon, Sun } from 'lucide-react'
 
 interface NavigationProps {
   session: Session | null;
@@ -17,6 +19,7 @@ export default function Navigation({ session }: NavigationProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const { theme, setTheme } = useTheme()
 
   useEffect(() => {
     const getSession = async () => {
@@ -87,62 +90,73 @@ export default function Navigation({ session }: NavigationProps) {
 
   return (
     <>
-      <nav className="bg-chat-bg shadow-sm">
+      <nav className="bg-chat-bg shadow-sm dark:bg-black border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-10">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <Link href="/" className="text-xl font-bold text-gray-800">
-                  MeerChat
-                </Link>
-              </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link
-                  href="/"
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200 ${
-                    isActive("/")
-                      ? "border-send-button text-gray-900 font-semibold"
-                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                  }`}
-                >
-                  ホーム
-                </Link>
-                <Link
-                  href="/chats?channel_name=thread1"
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200 ${
-                    isActive("/chats")
-                      ? "border-send-button text-gray-900 font-semibold"
-                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                  }`}
-                >
-                  チャット
-                </Link>
-                {!session && (
-                  <div className="flex space-x-4">
-                    <Link
-                      href="/auth/signin"
-                      className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200 ${
-                        isActive("/auth/signin")
-                          ? "border-send-button text-gray-900 font-semibold"
-                          : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                      }`}
-                    >
-                      サインイン
-                    </Link>
-                    <Link
-                      href="/auth/signup"
-                      className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200 ${
-                        isActive("/auth/signup")
-                          ? "border-send-button text-gray-900 font-semibold"
-                          : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                      }`}
-                    >
-                      新規登録
-                    </Link>
-                  </div>
+            <div className="flex items-center space-x-4">
+              <Link href="/" className="text-xl font-bold text-gray-800 dark:text-global-bg">
+                MeerChat
+              </Link>
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="p-1.5 rounded-lg hover:bg-global-bg dark:hover:bg-black/20 transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? (
+                  <Sun className="h-4 w-4 text-global-bg" />
+                ) : (
+                  <Moon className="h-4 w-4 text-black" />
                 )}
-              </div>
+              </button>
             </div>
+
+            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <Link
+                href="/"
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200 ${
+                  isActive("/")
+                    ? "border-send-button text-gray-900 dark:text-global-bg font-semibold"
+                    : "border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                ホーム
+              </Link>
+              <Link
+                href="/chats?channel_name=thread1"
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200 ${
+                  isActive("/chats")
+                    ? "border-send-button text-gray-900 dark:text-global-bg font-semibold"
+                    : "border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                チャット
+              </Link>
+              {!session && (
+                <div className="flex space-x-4">
+                  <Link
+                    href="/auth/signin"
+                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200 ${
+                      isActive("/auth/signin")
+                        ? "border-send-button text-gray-900 dark:text-global-bg font-semibold"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
+                    }`}
+                  >
+                    サインイン
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200 ${
+                      isActive("/auth/signup")
+                        ? "border-send-button text-gray-900 dark:text-global-bg font-semibold"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
+                    }`}
+                  >
+                    新規登録
+                  </Link>
+                </div>
+              )}
+            </div>
+
             {session && (
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
                 <Link
@@ -163,16 +177,17 @@ export default function Navigation({ session }: NavigationProps) {
                 </Link>
                 <button
                   onClick={() => setIsLogoutModalOpen(true)}
-                  className="ml-4 text-gray-500 hover:text-gray-700 text-sm font-medium hover:text-send-button transition-colors duration-200"
+                  className="ml-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 text-sm font-medium hover:text-send-button transition-colors duration-200"
                 >
                   サインアウト
                 </button>
               </div>
             )}
+
             <div className="flex items-center sm:hidden">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-black/20 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
               >
                 <span className="sr-only">メニューを開く</span>
                 <svg
@@ -205,8 +220,8 @@ export default function Navigation({ session }: NavigationProps) {
               href="/"
               className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
                 isActive("/")
-                  ? "bg-send-button/10 border-send-button text-gray-900 font-semibold"
-                  : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                  ? "bg-send-button/10 border-send-button text-gray-900 dark:text-global-bg font-semibold"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-black/20 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
             >
               ホーム
@@ -217,8 +232,8 @@ export default function Navigation({ session }: NavigationProps) {
                   href="/chats?channel_name=thread1"
                   className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
                     isActive("/chats")
-                      ? "bg-send-button/10 border-send-button text-gray-900 font-semibold"
-                      : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                      ? "bg-send-button/10 border-send-button text-gray-900 dark:text-global-bg font-semibold"
+                      : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-black/20 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
                   チャット
@@ -227,15 +242,15 @@ export default function Navigation({ session }: NavigationProps) {
                   href="/profile"
                   className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
                     isActive("/profile")
-                      ? "bg-send-button/10 border-send-button text-gray-900 font-semibold"
-                      : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                      ? "bg-send-button/10 border-send-button text-gray-900 dark:text-global-bg font-semibold"
+                      : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-black/20 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
                   プロフィール
                 </Link>
                 <button
                   onClick={() => setIsLogoutModalOpen(true)}
-                  className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                  className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-black/20 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                   サインアウト
                 </button>
@@ -246,8 +261,8 @@ export default function Navigation({ session }: NavigationProps) {
                   href="/auth/signin"
                   className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
                     isActive("/auth/signin")
-                      ? "bg-send-button/10 border-send-button text-gray-900 font-semibold"
-                      : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                      ? "bg-send-button/10 border-send-button text-gray-900 dark:text-global-bg font-semibold"
+                      : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-black/20 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
                   サインイン
@@ -256,8 +271,8 @@ export default function Navigation({ session }: NavigationProps) {
                   href="/auth/signup"
                   className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
                     isActive("/auth/signup")
-                      ? "bg-send-button/10 border-send-button text-gray-900 font-semibold"
-                      : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                      ? "bg-send-button/10 border-send-button text-gray-900 dark:text-global-bg font-semibold"
+                      : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-black/20 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
                   新規登録
@@ -271,13 +286,13 @@ export default function Navigation({ session }: NavigationProps) {
       {/* ログアウト確認モーダル */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">ログアウトの確認</h3>
-            <p className="text-sm text-gray-500 mb-6">ログアウトしてもよろしいですか？</p>
+          <div className="bg-white dark:bg-black rounded-lg p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-global-bg mb-4">ログアウトの確認</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">ログアウトしてもよろしいですか？</p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setIsLogoutModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-black/20 hover:bg-gray-200 dark:hover:bg-black/40 rounded-md"
               >
                 キャンセル
               </button>

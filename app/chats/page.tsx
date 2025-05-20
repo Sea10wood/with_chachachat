@@ -23,7 +23,7 @@ export default function Chats() {
   const [user, setUser] = useState<any>(null)
   const [messages, setMessages] = useState<Database["public"]["Tables"]["Chats"]["Row"][]>([])
   const [profiles, setProfiles] = useState<Database["public"]["Tables"]["profiles"]["Row"][]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [isLoadingPrev, setIsLoadingPrev] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [oldestMessageDate, setOldestMessageDate] = useState<string | null>(null)
@@ -70,6 +70,17 @@ export default function Chats() {
     const element = e.currentTarget;
     const isNearTop = element.scrollTop < SCROLL_THRESHOLD;
     const isBottom = element.scrollHeight - element.scrollTop - element.clientHeight < BOTTOM_THRESHOLD;
+
+    console.log('Scroll position:', {
+      scrollTop: element.scrollTop,
+      scrollHeight: element.scrollHeight,
+      clientHeight: element.clientHeight,
+      isNearTop,
+      isBottom,
+      hasMore,
+      isLoadingPrev,
+      oldestMessageDate
+    });
 
     setIsNearBottom(isBottom);
 
@@ -179,6 +190,25 @@ export default function Chats() {
         if (user) {
           setUserID(user.id);
           setUser(user);
+
+          // プロフィール情報を取得
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+          if (profileError) {
+            console.error('プロフィール取得エラー:', profileError);
+          } else if (profile) {
+            setProfiles(prev => {
+              const exists = prev.some(p => p.id === profile.id);
+              if (!exists) {
+                return [...prev, profile];
+              }
+              return prev;
+            });
+          }
         }
 
         const { data, error } = await supabase
@@ -199,12 +229,7 @@ export default function Chats() {
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
 
-          // メッセージを少しずつ表示するために、空の配列から始めて徐々に追加
-          setMessages([]);
-          setTimeout(() => {
-            setMessages(sortedMessages);
-          }, 100);
-
+          setMessages(sortedMessages);
           setHasMore(data.length === MESSAGE_LIMIT);
           setOldestMessageDate(sortedMessages[0]?.created_at || null);
         }
@@ -218,6 +243,31 @@ export default function Chats() {
 
     resetAndFetchMessages();
   }, [channelName]);
+
+  // プロフィール情報の取得
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('name');
+
+        if (error) {
+          console.error('プロフィール取得エラー:', error);
+          return;
+        }
+
+        if (profiles) {
+          setProfiles(profiles);
+        }
+      } catch (error) {
+        console.error('プロフィール取得エラー:', error);
+      }
+    };
+
+    fetchProfiles();
+  }, []);
 
   // 初期描画後の自動スクロール
   useEffect(() => {
@@ -251,6 +301,13 @@ export default function Chats() {
   useEffect(() => {
     if (!channelName) return;
 
+    // 前回のチャンネルのサブスクリプションを解除
+    const cleanup = () => {
+      const channel = supabase.channel(channelName);
+      channel.unsubscribe();
+    };
+
+    // 新しいチャンネルのサブスクリプションを設定
     const channel = supabase.channel(channelName)
       .on(
         'postgres_changes',
@@ -263,11 +320,12 @@ export default function Chats() {
         (payload: { new: Database["public"]["Tables"]["Chats"]["Row"] }) => {
           const newMessage = payload.new as Database["public"]["Tables"]["Chats"]["Row"];
 
+          // 重複チェックと追加
           if (!addMessageIfNotExists(newMessage)) return;
 
-          // 新しいメッセージを追加する際もアニメーションを適用
           setMessages(prev => [...prev, newMessage]);
 
+          // 最下部にいる場合のみスクロール、そうでなければアラートを表示
           if (isNearBottom) {
             requestAnimationFrame(() => {
               if (messagesContainerRef.current) {
@@ -279,6 +337,7 @@ export default function Chats() {
             });
           } else {
             setShowNewMessageAlert(true);
+            // 3秒後にアラートを非表示
             setTimeout(() => {
               setShowNewMessageAlert(false);
             }, 3000);
@@ -288,7 +347,7 @@ export default function Chats() {
       .subscribe();
 
     return () => {
-      channel.unsubscribe();
+      cleanup();
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
@@ -326,27 +385,17 @@ export default function Chats() {
     setPopupState(prev => ({ ...prev, isOpen: false }))
   }
 
-  if (isLoading) {
+  if (!channelName) {
     return (
-      <div className="flex items-center justify-center h-full bg-chat-bg">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-700"></div>
+      <div className="flex items-center justify-center h-full bg-chat-bg dark:bg-black/40">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-global-bg"></div>
       </div>
-    )
+    );
   }
 
   const onSubmitNewMessage = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (inputText === "") return;
-
-    // ログインチェック
-    if (!userID) {
-      showPopup(
-        'サインインが必要です',
-        'メッセージを投稿するにはサインインしてね〜。',
-        'warning'
-      )
-      return;
-    }
+    if (inputText === "" || !userID) return;
 
     try {
       const { data: profile, error: profileError } = await supabase
@@ -396,83 +445,76 @@ export default function Chats() {
   }
 
   return (
-    <>
-      <div className="flex h-[calc(100vh-40px)] bg-chat-bg">
-        <SideBar 
-          profiles={profiles} 
-          setProfiles={setProfiles} 
-          handleClick={() => {}} 
-          user={user}
-        />
-        <div className="flex-1 flex flex-col">
-          <div 
-            ref={messagesContainerRef}
-            className="flex-1 overflow-y-auto p-4 flex flex-col bg-chat-bg"
-            onScroll={handleScroll}
-          >
-            {isLoading ? (
-              <div className="flex-1 relative">
-                <Loading />
-              </div>
-            ) : (
-              <>
-                {isLoadingPrev && (
-                  <div className="sticky top-0 bg-chat-bg/80 backdrop-blur-sm py-2 z-10">
-                    <div className="flex justify-center">
-                      <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-chat-bg"></div>
-                        <span className="text-sm text-gray-700">過去のメッセージを読み込み中...</span>
-                      </div>
+    <div className="flex h-[calc(100vh-40px)] bg-chat-bg dark:bg-black/40">
+      <SideBar profiles={profiles} setProfiles={setProfiles} handleClick={() => {}} user={user} />
+      <div className="flex-1 flex flex-col">
+        <div 
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto p-4 flex flex-col bg-chat-bg dark:bg-black/40"
+          onScroll={handleScroll}
+        >
+          {isLoading ? (
+            <div className="flex-1 relative flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-global-bg"></div>
+            </div>
+          ) : (
+            <>
+              {isLoadingPrev && (
+                <div className="sticky top-0 bg-chat-bg/80 dark:bg-black/40 backdrop-blur-sm py-2 z-10">
+                  <div className="flex justify-center">
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 dark:border-global-bg"></div>
+                      <span className="text-sm text-gray-700 dark:text-global-bg">過去のメッセージを読み込み中...</span>
                     </div>
                   </div>
-                )}
-                {showNewMessageAlert && (
-                  <div 
-                    className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-chat-bg text-gray-700 px-4 py-2 rounded-full cursor-pointer shadow-lg hover:bg-chat-bg/80 transition-colors"
-                    onClick={() => {
-                      setShowNewMessageAlert(false);
-                      requestAnimationFrame(() => {
-                        if (messagesContainerRef.current) {
-                          messagesContainerRef.current.scrollTo({
-                            top: messagesContainerRef.current.scrollHeight,
-                            behavior: 'smooth'
-                          });
-                        }
-                      });
-                    }}
-                  >
-                    新しいメッセージがあります
-                  </div>
-                )}
-                <div className="space-y-4">
-                  {messages.map((message, index) => (
-                    <ChatUI chatData={message} index={index} key={message.id || index} />
-                  ))}
                 </div>
-              </>
-            )}
-          </div>
-          <form className="p-2 border-t bg-chat-bg" onSubmit={onSubmitNewMessage}>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <textarea
-                  className="w-full p-2 border rounded-lg resize-none bg-input-bg"
-                  rows={2}
-                  placeholder="メッセージを入力..."
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                />
+              )}
+              {showNewMessageAlert && (
+                <div 
+                  className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-chat-bg dark:bg-black/40 text-gray-700 dark:text-global-bg px-4 py-2 rounded-full cursor-pointer shadow-lg hover:bg-chat-bg/80 dark:hover:bg-black/60 transition-colors"
+                  onClick={() => {
+                    setShowNewMessageAlert(false);
+                    requestAnimationFrame(() => {
+                      if (messagesContainerRef.current) {
+                        messagesContainerRef.current.scrollTo({
+                          top: messagesContainerRef.current.scrollHeight,
+                          behavior: 'smooth'
+                        });
+                      }
+                    });
+                  }}
+                >
+                  新しいメッセージがあります
+                </div>
+              )}
+              <div className="space-y-4">
+                {messages.map((message, index) => (
+                  <ChatUI chatData={message} index={index} key={message.id || index} />
+                ))}
               </div>
-              <button
-                type="submit"
-                disabled={inputText === ""}
-                className="px-3 py-1.5 bg-send-button text-gray-700 rounded-lg disabled:opacity-50 text-sm hover:bg-send-button/80 transition-colors"
-              >
-                送信
-              </button>
-            </div>
-          </form>
+            </>
+          )}
         </div>
+        <form className="p-2 border-t bg-chat-bg dark:bg-black/40" onSubmit={onSubmitNewMessage}>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <textarea
+                className="w-full p-2 border rounded-lg resize-none bg-input-bg dark:bg-black/40 text-gray-900 dark:text-global-bg placeholder-gray-500 dark:placeholder-gray-400"
+                rows={2}
+                placeholder="メッセージを入力..."
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={inputText === ""}
+              className="px-3 py-1.5 bg-send-button text-gray-700 dark:text-global-bg rounded-lg disabled:opacity-50 text-sm hover:bg-send-button/80 transition-colors"
+            >
+              送信
+            </button>
+          </div>
+        </form>
       </div>
       <MessagePopup
         isOpen={popupState.isOpen}
@@ -481,6 +523,6 @@ export default function Chats() {
         message={popupState.message}
         type={popupState.type}
       />
-    </>
+    </div>
   )
 }
