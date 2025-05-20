@@ -19,6 +19,7 @@ export default function Chats() {
 
   const [inputText, setInputText] = useState("")
   const [userID, setUserID] = useState("")
+  const [user, setUser] = useState<any>(null)
   const [messages, setMessages] = useState<Database["public"]["Tables"]["Chats"]["Row"][]>([])
   const [profiles, setProfiles] = useState<Database["public"]["Tables"]["profiles"]["Row"][]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -162,7 +163,10 @@ export default function Chats() {
 
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (user) setUserID(user.id);
+        if (user) {
+          setUserID(user.id);
+          setUser(user);
+        }
 
         const { data, error } = await supabase
           .from("Chats")
@@ -331,11 +335,13 @@ export default function Chats() {
 
   return (
     <div className="flex h-[calc(100vh-40px)] bg-chat-bg">
-      <SideBar profiles={profiles} setProfiles={setProfiles} handleClick={() => {}} />
+      <SideBar 
+        profiles={profiles} 
+        setProfiles={setProfiles} 
+        handleClick={() => {}} 
+        user={user}
+      />
       <div className="flex-1 flex flex-col">
-        <div className="p-4 border-b bg-chat-bg">
-          <h1 className="text-2xl font-bold">{channelName}</h1>
-        </div>
         <div 
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto p-4 flex flex-col bg-chat-bg"

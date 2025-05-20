@@ -9,6 +9,14 @@ const nextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
+    unoptimized: true,
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': '.',
+    };
+    return config;
   },
 }
 

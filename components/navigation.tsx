@@ -2,10 +2,8 @@
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Database } from "@/types/supabasetype"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
-import ModalCore from "./modalCore"
-import { ModalType } from "./modal/modalType"
 import { Session } from '@supabase/supabase-js'
 
 interface NavigationProps {
@@ -18,14 +16,47 @@ export default function Navigation({ session }: NavigationProps) {
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', session.user.id)
+          .single()
+        
+        if (profile?.avatar_url) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(profile.avatar_url)
+          setAvatarUrl(publicUrl)
+        } else {
+          setAvatarUrl('/user.webp')
+        }
+      }
     }
     getSession()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', session.user.id)
+          .single()
+        
+        if (profile?.avatar_url) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(profile.avatar_url)
+          setAvatarUrl(publicUrl)
+        } else {
+          setAvatarUrl('/user.webp')
+        }
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -66,30 +97,53 @@ export default function Navigation({ session }: NavigationProps) {
                 >
                   ホーム
                 </Link>
-                {session ? (
-                  <Link
-                    href="/profile"
-                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      pathname === "/profile"
-                        ? "border-send-button text-gray-900"
-                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                    }`}
-                  >
-                    プロフィール
-                  </Link>
-                ) : (
+                <Link
+                  href="/chats?channel_name=thread2"
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    pathname === "/chats?channel_name=thread1"
+                      ? "border-send-button text-gray-900"
+                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  }`}
+                >
+                  チャット
+                </Link>
+                {!session && (
                   <div className="flex space-x-4">
-                    <ModalCore modalType={ModalType.SignIn} />
-                    <ModalCore modalType={ModalType.SignUp} />
+                    <Link
+                      href="/auth/signin"
+                      className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                    >
+                      ログイン
+                    </Link>
+                    <Link
+                      href="/auth/signup"
+                      className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                    >
+                      新規登録
+                    </Link>
                   </div>
                 )}
               </div>
             </div>
             {session && (
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
+                <Link
+                  href="/profile"
+                  className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-send-button"
+                >
+                  <img
+                    src={avatarUrl || '/user.webp'}
+                    alt="プロフィール画像"
+                    className="h-8 w-8 rounded-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/user.webp';
+                    }}
+                  />
+                </Link>
                 <button
                   onClick={() => setIsLogoutModalOpen(true)}
-                  className="text-gray-500 hover:text-gray-700 text-sm font-medium hover:text-send-button"
+                  className="ml-4 text-gray-500 hover:text-gray-700 text-sm font-medium hover:text-send-button"
                 >
                   ログアウト
                 </button>
@@ -140,14 +194,14 @@ export default function Navigation({ session }: NavigationProps) {
             {session ? (
               <>
                 <Link
-                  href="/profile"
+                  href={`/chats?channel_name=thread1`}
                   className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                    pathname === "/profile"
+                    pathname === "/chats?channel_name=thread1"
                       ? "bg-send-button/10 border-send-button text-gray-700"
                       : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
                   }`}
                 >
-                  プロフィール
+                  チャット
                 </Link>
                 <button
                   onClick={() => setIsLogoutModalOpen(true)}
@@ -158,8 +212,18 @@ export default function Navigation({ session }: NavigationProps) {
               </>
             ) : (
               <div className="px-3 py-2 space-y-2">
-                <ModalCore modalType={ModalType.SignIn} />
-                <ModalCore modalType={ModalType.SignUp} />
+                <Link
+                  href="/auth/signin"
+                  className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                >
+                  ログイン
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                >
+                  新規登録
+                </Link>
               </div>
             )}
           </div>
@@ -181,7 +245,7 @@ export default function Navigation({ session }: NavigationProps) {
               </button>
               <button
                 onClick={handleSignOut}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-send-button hover:bg-send-button/80 rounded-md"
+                className="px-4 py-2 text-sm font-medium text-white bg-send-button hover:bg-send-button/80 rounded-md"
               >
                 ログアウト
               </button>

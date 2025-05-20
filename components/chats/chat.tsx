@@ -56,15 +56,20 @@ export default function ChatUI(props: Props) {
   return (
     <div className={`flex gap-2 mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
       {!isCurrentUser && (
-        <div className="w-8 h-8 relative">
-          <Image
-            src={isAIResponse ? "/ai.webp" : (profile?.avatar_url || '/user.webp')}
-            alt={isAIResponse ? "AI" : (profile?.name || 'User')}
-            fill
-            className="rounded-full object-cover"
-            sizes="32px"
-            priority={index < 5}
-          />
+        <div className="flex flex-col items-center">
+          <div className="w-8 h-8 relative mb-1">
+            <Image
+              src={isAIResponse ? "/ai.webp" : (profile?.avatar_url || '/user.webp')}
+              alt={isAIResponse ? "AI" : (profile?.name || 'User')}
+              fill
+              className="rounded-full object-cover"
+              sizes="32px"
+              priority={index < 5}
+            />
+          </div>
+          {!isAIResponse && (
+            <p className="text-[8px] text-gray-600">{profile?.name || 'ユーザー'}</p>
+          )}
         </div>
       )}
       <div className={`max-w-[70%] ${

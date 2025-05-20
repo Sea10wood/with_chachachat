@@ -110,7 +110,7 @@ export default function ProfileEdit() {
       if (!user) throw new Error("ユーザーが見つかりません")
 
       // 古いアバターを削除
-      if (avatarUrl) {
+      if (avatarUrl && avatarUrl.startsWith('http')) {
         const oldPath = avatarUrl.split('/').pop()
         if (oldPath) {
           await supabase.storage.from('avatars').remove([oldPath])
@@ -170,6 +170,11 @@ export default function ProfileEdit() {
               className="rounded-full object-cover"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               priority
+              unoptimized
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/user.webp';
+              }}
             />
           </div>
           <div className="flex flex-col items-center gap-2">
@@ -203,19 +208,19 @@ export default function ProfileEdit() {
           </div>
           <button
             type="submit"
-            className="w-full px-4 py-2 bg-send-button text-black rounded-lg hover:bg-loading-color transition-colors"
+            className="w-full bg-send-button text-black py-2 px-4 rounded-lg hover:bg-loading-color transition-colors"
           >
-            保存
+            更新
           </button>
         </form>
       </div>
       {showErrorModal && (
-        <ErrorModal 
-          message={error || successMessage || ""} 
+        <ErrorModal
+          message={error || successMessage || ""}
           showModal={setShowErrorModal}
           isError={!!error}
         />
       )}
     </div>
-  )
+  );
 } 
