@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import ChatUI from "@/components/chats/chat"
 import SideBar from "@/components/sidebar"
 import Loading from "@/components/loading"
+import MessagePopup from '@/components/molecules/MessagePopup'
 
 const MESSAGE_LIMIT = 20;
 const SCROLL_THRESHOLD = 50;
@@ -22,7 +23,7 @@ export default function Chats() {
   const [user, setUser] = useState<any>(null)
   const [messages, setMessages] = useState<Database["public"]["Tables"]["Chats"]["Row"][]>([])
   const [profiles, setProfiles] = useState<Database["public"]["Tables"]["profiles"]["Row"][]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [isLoadingPrev, setIsLoadingPrev] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [oldestMessageDate, setOldestMessageDate] = useState<string | null>(null)
@@ -35,6 +36,18 @@ export default function Chats() {
   const isScrollingRef = useRef(false)
   const scrollTimeoutRef = useRef<NodeJS.Timeout>()
   const processedMessageIdsRef = useRef<Set<string>>(new Set())
+
+  const [popupState, setPopupState] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    type: 'info' | 'warning' | 'error'
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info'
+  })
 
   // メッセージの重複チェックと追加
   const addMessageIfNotExists = useCallback((message: Database["public"]["Tables"]["Chats"]["Row"]) => {
@@ -186,7 +199,12 @@ export default function Chats() {
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
 
-          setMessages(sortedMessages);
+          // メッセージを少しずつ表示するために、空の配列から始めて徐々に追加
+          setMessages([]);
+          setTimeout(() => {
+            setMessages(sortedMessages);
+          }, 100);
+
           setHasMore(data.length === MESSAGE_LIMIT);
           setOldestMessageDate(sortedMessages[0]?.created_at || null);
         }
@@ -233,13 +251,6 @@ export default function Chats() {
   useEffect(() => {
     if (!channelName) return;
 
-    // 前回のチャンネルのサブスクリプションを解除
-    const cleanup = () => {
-      const channel = supabase.channel(channelName);
-      channel.unsubscribe();
-    };
-
-    // 新しいチャンネルのサブスクリプションを設定
     const channel = supabase.channel(channelName)
       .on(
         'postgres_changes',
@@ -252,12 +263,11 @@ export default function Chats() {
         (payload: { new: Database["public"]["Tables"]["Chats"]["Row"] }) => {
           const newMessage = payload.new as Database["public"]["Tables"]["Chats"]["Row"];
 
-          // 重複チェックと追加
           if (!addMessageIfNotExists(newMessage)) return;
 
+          // 新しいメッセージを追加する際もアニメーションを適用
           setMessages(prev => [...prev, newMessage]);
 
-          // 最下部にいる場合のみスクロール、そうでなければアラートを表示
           if (isNearBottom) {
             requestAnimationFrame(() => {
               if (messagesContainerRef.current) {
@@ -269,7 +279,6 @@ export default function Chats() {
             });
           } else {
             setShowNewMessageAlert(true);
-            // 3秒後にアラートを非表示
             setTimeout(() => {
               setShowNewMessageAlert(false);
             }, 3000);
@@ -279,20 +288,65 @@ export default function Chats() {
       .subscribe();
 
     return () => {
-      cleanup();
+      channel.unsubscribe();
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
     };
   }, [channelName, addMessageIfNotExists, isNearBottom]);
 
-  if (!channelName) {
-    return <Loading />;
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          setUserID(session.user.id)
+          setUser(session.user)
+        }
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error checking user:', error)
+        setIsLoading(false)
+      }
+    }
+
+    checkUser()
+  }, [supabase.auth])
+
+  const showPopup = (title: string, message: string, type: 'info' | 'warning' | 'error' = 'info') => {
+    setPopupState({
+      isOpen: true,
+      title,
+      message,
+      type
+    })
+  }
+
+  const closePopup = () => {
+    setPopupState(prev => ({ ...prev, isOpen: false }))
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full bg-chat-bg">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-700"></div>
+      </div>
+    )
   }
 
   const onSubmitNewMessage = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (inputText === "" || !userID) return;
+    if (inputText === "") return;
+
+    // ログインチェック
+    if (!userID) {
+      showPopup(
+        'サインインが必要です',
+        'メッセージを投稿するにはサインインしてね〜。',
+        'warning'
+      )
+      return;
+    }
 
     try {
       const { data: profile, error: profileError } = await supabase
@@ -307,7 +361,11 @@ export default function Chats() {
       }
 
       if (!profile) {
-        alert("投稿前にユーザ名を設定してください。")
+        showPopup(
+          'プロフィール設定が必要です',
+          '投稿前にユーザ名を設定してください。',
+          'warning'
+        )
         return;
       }
 
@@ -329,87 +387,100 @@ export default function Chats() {
       setInputText("");
     } catch (error) {
       console.error("エラー:", error);
-      alert("メッセージの送信に失敗しました");
+      showPopup(
+        'エラーが発生しました',
+        'メッセージの送信に失敗しました。',
+        'error'
+      )
     }
   }
 
   return (
-    <div className="flex h-[calc(100vh-40px)] bg-chat-bg">
-      <SideBar 
-        profiles={profiles} 
-        setProfiles={setProfiles} 
-        handleClick={() => {}} 
-        user={user}
-      />
-      <div className="flex-1 flex flex-col">
-        <div 
-          ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto p-4 flex flex-col bg-chat-bg"
-          onScroll={handleScroll}
-        >
-          {isLoading ? (
-            <div className="flex-1 relative">
-              <Loading />
-            </div>
-          ) : (
-            <>
-              {isLoadingPrev && (
-                <div className="sticky top-0 bg-chat-bg/80 backdrop-blur-sm py-2 z-10">
-                  <div className="flex justify-center">
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-chat-bg"></div>
-                      <span className="text-sm text-gray-700">過去のメッセージを読み込み中...</span>
+    <>
+      <div className="flex h-[calc(100vh-40px)] bg-chat-bg">
+        <SideBar 
+          profiles={profiles} 
+          setProfiles={setProfiles} 
+          handleClick={() => {}} 
+          user={user}
+        />
+        <div className="flex-1 flex flex-col">
+          <div 
+            ref={messagesContainerRef}
+            className="flex-1 overflow-y-auto p-4 flex flex-col bg-chat-bg"
+            onScroll={handleScroll}
+          >
+            {isLoading ? (
+              <div className="flex-1 relative">
+                <Loading />
+              </div>
+            ) : (
+              <>
+                {isLoadingPrev && (
+                  <div className="sticky top-0 bg-chat-bg/80 backdrop-blur-sm py-2 z-10">
+                    <div className="flex justify-center">
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-chat-bg"></div>
+                        <span className="text-sm text-gray-700">過去のメッセージを読み込み中...</span>
+                      </div>
                     </div>
                   </div>
+                )}
+                {showNewMessageAlert && (
+                  <div 
+                    className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-chat-bg text-gray-700 px-4 py-2 rounded-full cursor-pointer shadow-lg hover:bg-chat-bg/80 transition-colors"
+                    onClick={() => {
+                      setShowNewMessageAlert(false);
+                      requestAnimationFrame(() => {
+                        if (messagesContainerRef.current) {
+                          messagesContainerRef.current.scrollTo({
+                            top: messagesContainerRef.current.scrollHeight,
+                            behavior: 'smooth'
+                          });
+                        }
+                      });
+                    }}
+                  >
+                    新しいメッセージがあります
+                  </div>
+                )}
+                <div className="space-y-4">
+                  {messages.map((message, index) => (
+                    <ChatUI chatData={message} index={index} key={message.id || index} />
+                  ))}
                 </div>
-              )}
-              {showNewMessageAlert && (
-                <div 
-                  className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-chat-bg text-gray-700 px-4 py-2 rounded-full cursor-pointer shadow-lg hover:bg-chat-bg/80 transition-colors"
-                  onClick={() => {
-                    setShowNewMessageAlert(false);
-                    requestAnimationFrame(() => {
-                      if (messagesContainerRef.current) {
-                        messagesContainerRef.current.scrollTo({
-                          top: messagesContainerRef.current.scrollHeight,
-                          behavior: 'smooth'
-                        });
-                      }
-                    });
-                  }}
-                >
-                  新しいメッセージがあります
-                </div>
-              )}
-              <div className="space-y-4">
-                {messages.map((message, index) => (
-                  <ChatUI chatData={message} index={index} key={message.id || index} />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-        <form className="p-2 border-t bg-chat-bg" onSubmit={onSubmitNewMessage}>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <textarea
-                className="w-full p-2 border rounded-lg resize-none bg-input-bg"
-                rows={2}
-                placeholder="メッセージを入力..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={inputText === ""}
-              className="px-3 py-1.5 bg-send-button text-gray-700 rounded-lg disabled:opacity-50 text-sm hover:bg-send-button/80 transition-colors"
-            >
-              送信
-            </button>
+              </>
+            )}
           </div>
-        </form>
+          <form className="p-2 border-t bg-chat-bg" onSubmit={onSubmitNewMessage}>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <textarea
+                  className="w-full p-2 border rounded-lg resize-none bg-input-bg"
+                  rows={2}
+                  placeholder="メッセージを入力..."
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={inputText === ""}
+                className="px-3 py-1.5 bg-send-button text-gray-700 rounded-lg disabled:opacity-50 text-sm hover:bg-send-button/80 transition-colors"
+              >
+                送信
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+      <MessagePopup
+        isOpen={popupState.isOpen}
+        onClose={closePopup}
+        title={popupState.title}
+        message={popupState.message}
+        type={popupState.type}
+      />
+    </>
   )
 }

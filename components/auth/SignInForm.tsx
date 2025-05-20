@@ -103,7 +103,7 @@ export default function SignInForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 animate-slide-up">
       <FormField
         label="メールアドレス"
         type="email"
@@ -111,7 +111,7 @@ export default function SignInForm() {
         onChange={(e) => setEmail(e.target.value)}
         required
         error={error}
-        className="bg-gray-50"
+        className="bg-gray-50 transition-all duration-200 focus:ring-2 focus:ring-send-button/20"
       />
       <FormField
         label="パスワード"
@@ -119,12 +119,12 @@ export default function SignInForm() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
-        className="bg-gray-50"
+        className="bg-gray-50 transition-all duration-200 focus:ring-2 focus:ring-send-button/20"
       />
       <div className="flex items-center justify-between">
         <Link
           href="/auth/reset-password"
-          className="text-sm text-send-button hover:text-loading-color"
+          className="text-sm text-send-button hover:text-loading-color transition-colors duration-200"
         >
           パスワードを忘れた場合
         </Link>
@@ -132,7 +132,7 @@ export default function SignInForm() {
       <Button
         type="submit"
         variant="primary"
-        className="w-full bg-send-button hover:bg-send-button/80"
+        className="w-full bg-send-button hover:bg-send-button/80 transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
         isLoading={isLoading}
       >
         サインイン
@@ -151,7 +151,7 @@ export default function SignInForm() {
             type="button"
             variant="secondary"
             onClick={() => handleProviderSignIn("google")}
-            className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 opacity-50 cursor-not-allowed"
+            className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 opacity-50 cursor-not-allowed transition-all duration-200"
             disabled
           >
             Googleでサインイン
@@ -160,7 +160,7 @@ export default function SignInForm() {
             type="button"
             variant="secondary"
             onClick={() => handleProviderSignIn("github")}
-            className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 opacity-50 cursor-not-allowed"
+            className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 opacity-50 cursor-not-allowed transition-all duration-200"
             disabled
           >
             GitHubでサインイン

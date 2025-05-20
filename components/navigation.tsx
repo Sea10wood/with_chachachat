@@ -75,6 +75,16 @@ export default function Navigation({ session }: NavigationProps) {
     }
   }
 
+  const isActive = (path: string) => {
+    if (path === "/") {
+      return pathname === path;
+    }
+    if (path.includes("/chats")) {
+      return pathname.startsWith("/chats");
+    }
+    return pathname === path;
+  };
+
   return (
     <>
       <nav className="bg-chat-bg shadow-sm">
@@ -89,19 +99,19 @@ export default function Navigation({ session }: NavigationProps) {
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                 <Link
                   href="/"
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                    pathname === "/"
-                      ? "border-send-button text-gray-900"
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200 ${
+                    isActive("/")
+                      ? "border-send-button text-gray-900 font-semibold"
                       : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
                 >
                   ホーム
                 </Link>
                 <Link
-                  href="/chats?channel_name=thread2"
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                    pathname === "/chats?channel_name=thread1"
-                      ? "border-send-button text-gray-900"
+                  href="/chats?channel_name=thread1"
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200 ${
+                    isActive("/chats")
+                      ? "border-send-button text-gray-900 font-semibold"
                       : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
                 >
@@ -111,13 +121,21 @@ export default function Navigation({ session }: NavigationProps) {
                   <div className="flex space-x-4">
                     <Link
                       href="/auth/signin"
-                      className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                      className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200 ${
+                        isActive("/auth/signin")
+                          ? "border-send-button text-gray-900 font-semibold"
+                          : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                      }`}
                     >
-                      ログイン
+                      サインイン
                     </Link>
                     <Link
                       href="/auth/signup"
-                      className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                      className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200 ${
+                        isActive("/auth/signup")
+                          ? "border-send-button text-gray-900 font-semibold"
+                          : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                      }`}
                     >
                       新規登録
                     </Link>
@@ -129,7 +147,9 @@ export default function Navigation({ session }: NavigationProps) {
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
                 <Link
                   href="/profile"
-                  className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-send-button"
+                  className={`p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-send-button transition-all duration-200 ${
+                    isActive("/profile") ? "ring-2 ring-send-button" : ""
+                  }`}
                 >
                   <img
                     src={avatarUrl || '/user.webp'}
@@ -143,9 +163,9 @@ export default function Navigation({ session }: NavigationProps) {
                 </Link>
                 <button
                   onClick={() => setIsLogoutModalOpen(true)}
-                  className="ml-4 text-gray-500 hover:text-gray-700 text-sm font-medium hover:text-send-button"
+                  className="ml-4 text-gray-500 hover:text-gray-700 text-sm font-medium hover:text-send-button transition-colors duration-200"
                 >
-                  ログアウト
+                  サインアウト
                 </button>
               </div>
             )}
@@ -183,9 +203,9 @@ export default function Navigation({ session }: NavigationProps) {
           <div className="pt-2 pb-3 space-y-1">
             <Link
               href="/"
-              className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                pathname === "/"
-                  ? "bg-send-button/10 border-send-button text-gray-700"
+              className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
+                isActive("/")
+                  ? "bg-send-button/10 border-send-button text-gray-900 font-semibold"
                   : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
               }`}
             >
@@ -194,37 +214,55 @@ export default function Navigation({ session }: NavigationProps) {
             {session ? (
               <>
                 <Link
-                  href={`/chats?channel_name=thread1`}
-                  className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                    pathname === "/chats?channel_name=thread1"
-                      ? "bg-send-button/10 border-send-button text-gray-700"
+                  href="/chats?channel_name=thread1"
+                  className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
+                    isActive("/chats")
+                      ? "bg-send-button/10 border-send-button text-gray-900 font-semibold"
                       : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
                   }`}
                 >
                   チャット
                 </Link>
+                <Link
+                  href="/profile"
+                  className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
+                    isActive("/profile")
+                      ? "bg-send-button/10 border-send-button text-gray-900 font-semibold"
+                      : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                  }`}
+                >
+                  プロフィール
+                </Link>
                 <button
                   onClick={() => setIsLogoutModalOpen(true)}
                   className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
                 >
-                  ログアウト
+                  サインアウト
                 </button>
               </>
             ) : (
-              <div className="px-3 py-2 space-y-2">
+              <>
                 <Link
                   href="/auth/signin"
-                  className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                  className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
+                    isActive("/auth/signin")
+                      ? "bg-send-button/10 border-send-button text-gray-900 font-semibold"
+                      : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                  }`}
                 >
-                  ログイン
+                  サインイン
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                  className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
+                    isActive("/auth/signup")
+                      ? "bg-send-button/10 border-send-button text-gray-900 font-semibold"
+                      : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                  }`}
                 >
                   新規登録
                 </Link>
-              </div>
+              </>
             )}
           </div>
         </div>
@@ -247,7 +285,7 @@ export default function Navigation({ session }: NavigationProps) {
                 onClick={handleSignOut}
                 className="px-4 py-2 text-sm font-medium text-white bg-send-button hover:bg-send-button/80 rounded-md"
               >
-                ログアウト
+                サインアウト
               </button>
             </div>
           </div>
