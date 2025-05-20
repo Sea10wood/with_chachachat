@@ -8,6 +8,7 @@ import SideBar from "@/components/sidebar"
 import Loading from "@/components/loading"
 import MessagePopup from '@/components/molecules/MessagePopup'
 import { debounce } from 'lodash'
+import Link from "next/link"
 
 const MESSAGE_LIMIT = 20;
 const SCROLL_THRESHOLD = 50;
@@ -493,26 +494,42 @@ export default function Chats() {
             </>
           )}
         </div>
-        <form className="p-2 border-t bg-chat-bg dark:bg-black/40" onSubmit={onSubmitNewMessage}>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <textarea
-                className="w-full p-2 border rounded-lg resize-none bg-input-bg dark:bg-black/40 text-gray-900 dark:text-global-bg placeholder-gray-500 dark:placeholder-gray-400"
-                rows={2}
-                placeholder="メッセージを入力..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-              />
+        {user ? (
+          <form className="p-2 border-t bg-chat-bg dark:bg-black/40" onSubmit={onSubmitNewMessage}>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <textarea
+                  className="w-full p-2 border rounded-lg resize-none bg-input-bg dark:bg-black/40 text-gray-900 dark:text-global-bg placeholder-gray-500 dark:placeholder-gray-400"
+                  rows={2}
+                  placeholder="メッセージを入力..."
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={inputText === ""}
+                className="px-3 py-1.5 bg-send-button text-gray-700 dark:text-global-bg rounded-lg disabled:opacity-50 text-sm hover:bg-send-button/80 transition-colors"
+              >
+                送信
+              </button>
             </div>
-            <button
-              type="submit"
-              disabled={inputText === ""}
-              className="px-3 py-1.5 bg-send-button text-gray-700 dark:text-global-bg rounded-lg disabled:opacity-50 text-sm hover:bg-send-button/80 transition-colors"
-            >
-              送信
-            </button>
+          </form>
+        ) : (
+          <div className="p-2 border-t bg-chat-bg dark:bg-black/40">
+            <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-black/40 rounded-lg shadow-sm">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                メッセージを送信するにはログインが必要です
+              </p>
+              <Link
+                href="/auth/signin"
+                className="text-sm bg-send-button hover:bg-send-button/80 text-gray-900 dark:text-global-bg px-4 py-1.5 rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                ログイン
+              </Link>
+            </div>
           </div>
-        </form>
+        )}
       </div>
       <MessagePopup
         isOpen={popupState.isOpen}
