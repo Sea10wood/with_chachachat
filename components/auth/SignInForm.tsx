@@ -6,11 +6,13 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import FormField from "@/components/molecules/FormField/FormField";
 import Button from "@/components/atoms/Button/Button";
 import Link from "next/link";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 export default function SignInForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClientComponentClient();
@@ -111,16 +113,30 @@ export default function SignInForm() {
         onChange={(e) => setEmail(e.target.value)}
         required
         error={error}
-        className="bg-gray-50 transition-all duration-200 focus:ring-2 focus:ring-send-button/20"
+        className="bg-gray-50 dark:bg-black/40 transition-all duration-200 focus:ring-2 focus:ring-send-button/20 text-gray-900 dark:text-gray-100"
       />
-      <FormField
-        label="パスワード"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        className="bg-gray-50 transition-all duration-200 focus:ring-2 focus:ring-send-button/20"
-      />
+      <div className="relative">
+        <FormField
+          label="パスワード"
+          type={showPassword ? "text" : "password"}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="bg-gray-50 dark:bg-black/40 transition-all duration-200 focus:ring-2 focus:ring-send-button/20 text-gray-900 dark:text-gray-100 pr-10"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-3 top-[38px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
+          aria-label={showPassword ? "パスワードを隠す" : "パスワードを表示"}
+        >
+          {showPassword ? (
+            <EyeIcon className="h-5 w-5" />
+          ) : (
+            <EyeSlashIcon className="h-5 w-5" />
+          )}
+        </button>
+      </div>
       <div className="flex items-center justify-between">
         <Link
           href="/auth/reset-password"
@@ -132,7 +148,7 @@ export default function SignInForm() {
       <Button
         type="submit"
         variant="primary"
-        className="w-full bg-send-button hover:bg-send-button/80 transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+        className="w-full bg-send-button hover:bg-send-button/80 transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] text-gray-900 dark:text-gray-100"
         isLoading={isLoading}
       >
         サインイン
@@ -140,18 +156,18 @@ export default function SignInForm() {
       <div className="mt-4">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
+            <div className="w-full border-t border-gray-300 dark:border-gray-700" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">または</span>
+            <span className="px-2 bg-white dark:bg-black text-gray-500 dark:text-gray-400 text-xs">または</span>
           </div>
         </div>
-        <div className="mt-6 grid grid-cols-2 gap-3">
+        <div className="mt-4 grid grid-cols-2 gap-2">
           <Button
             type="button"
             variant="secondary"
             onClick={() => handleProviderSignIn("google")}
-            className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 opacity-50 cursor-not-allowed transition-all duration-200"
+            className="bg-white dark:bg-black/40 hover:bg-gray-50 dark:hover:bg-black/60 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 opacity-50 cursor-not-allowed transition-all duration-200 text-sm py-1.5"
             disabled
           >
             Googleでサインイン
@@ -160,7 +176,7 @@ export default function SignInForm() {
             type="button"
             variant="secondary"
             onClick={() => handleProviderSignIn("github")}
-            className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 opacity-50 cursor-not-allowed transition-all duration-200"
+            className="bg-white dark:bg-black/40 hover:bg-gray-50 dark:hover:bg-black/60 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 opacity-50 cursor-not-allowed transition-all duration-200 text-sm py-1.5"
             disabled
           >
             GitHubでサインイン

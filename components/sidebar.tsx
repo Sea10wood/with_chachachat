@@ -39,30 +39,32 @@ export default function SideBar({ profiles, setProfiles, handleClick, user }: Si
   }
 
   return (
-    <div className="w-64 border-r bg-sidebar-bg h-full overflow-y-auto flex flex-col">
+    <div className="w-64 border-r border-border bg-sidebar-bg dark:bg-black/20 h-full overflow-y-auto flex flex-col">
       <div className="p-4 flex-grow">
-        <h2 className="text-xl font-bold mb-4 text-black">スレッド一覧</h2>
+        <h2 className="text-xl font-bold mb-4 text-black dark:text-global-bg">スレッド一覧</h2>
         <div className="space-y-2">
           {threads.map((thread) => (
             <div
               key={thread.id}
               className={`p-2 rounded cursor-pointer transition-all ${
                 selectedId === thread.id 
-                  ? 'bg-send-button/20 shadow-md transform scale-[1.02] border-l-4 border-send-button' 
-                  : 'hover:bg-send-button/10'
+                  ? 'bg-send-button/20 dark:bg-send-button/10 shadow-md transform scale-[1.02] border-l-4 border-send-button' 
+                  : 'hover:bg-send-button/10 dark:hover:bg-send-button/5'
               }`}
               onClick={() => handleThreadClick(thread.id)}
             >
               <div className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                   selectedId === thread.id 
-                    ? 'bg-send-button text-black' 
-                    : 'bg-send-button/20 text-black'
+                    ? 'bg-send-button text-black dark:text-global-bg' 
+                    : 'bg-send-button/20 text-black dark:text-global-bg/80'
                 }`}>
                   {thread.name.charAt(0)}
                 </div>
                 <span className={`font-medium ${
-                  selectedId === thread.id ? 'text-black' : 'text-black/70'
+                  selectedId === thread.id 
+                    ? 'text-black dark:text-global-bg' 
+                    : 'text-black/70 dark:text-global-bg/70'
                 }`}>
                   {thread.name}
                 </span>

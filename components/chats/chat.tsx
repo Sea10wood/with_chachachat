@@ -1,7 +1,7 @@
 "use client"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/types/supabasetype"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import DateFormatter from '@/components/date';
 import Image from 'next/image'
 import { gsap } from 'gsap'
@@ -9,14 +9,17 @@ import { gsap } from 'gsap'
 interface Props {
   chatData: Database["public"]["Tables"]["Chats"]["Row"],
   index: number,
+  isInitialLoad?: boolean,
 }
 
 export default function ChatUI(props: Props) {
-  const { chatData, index } = props
+  const { chatData, index, isInitialLoad = false } = props
   const supabase = createClientComponentClient()
   const [profile, setProfile] = useState<Database["public"]["Tables"]["profiles"]["Row"] | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const messageRef = useRef<HTMLDivElement>(null)
+  const hasAnimated = useRef(false)
+  const animationRef = useRef<gsap.core.Tween | null>(null)
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -38,24 +41,52 @@ export default function ChatUI(props: Props) {
     fetchProfile()
   }, [chatData.uid])
 
-  useEffect(() => {
-    if (messageRef.current) {
-      gsap.fromTo(
-        messageRef.current,
-        {
-          opacity: 0,
-          y: 20,
-        },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.5,
-          delay: index * 0.1, // メッセージごとに少しずつ遅延を付ける
-          ease: "power2.out"
-        }
-      )
+  const animateMessage = useCallback(() => {
+    if (!messageRef.current || !isInitialLoad || hasAnimated.current) return;
+
+    // 既存のアニメーションをクリーンアップ
+    if (animationRef.current) {
+      animationRef.current.kill();
     }
-  }, [index])
+
+    hasAnimated.current = true;
+    animationRef.current = gsap.fromTo(
+      messageRef.current,
+      {
+        opacity: 0,
+        y: 20,
+      },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.5,
+        delay: index * 0.1,
+        ease: "power2.out",
+        onComplete: () => {
+          animationRef.current = null;
+        }
+      }
+    );
+  }, [index, isInitialLoad]);
+
+  useEffect(() => {
+    if (messageRef.current && !isInitialLoad) {
+      // 初期ロード以外の場合は即時表示
+      gsap.set(messageRef.current, {
+        opacity: 1,
+        y: 0
+      });
+    } else {
+      animateMessage();
+    }
+
+    // クリーンアップ関数
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.kill();
+      }
+    };
+  }, [isInitialLoad, animateMessage]);
 
   const isCurrentUser = currentUserId === chatData.uid
   const isAIResponse = chatData.is_ai_response
@@ -65,7 +96,7 @@ export default function ChatUI(props: Props) {
     const parts = text.split(/(@meerchat)/g);
     return parts.map((part, i) => 
       part === '@meerchat' ? (
-        <span key={i} className="bg-ai-message/80 px-1 rounded font-medium">
+        <span key={i} className="bg-ai-message/80 dark:bg-ai-message/40 px-1 rounded font-medium">
           {part}
         </span>
       ) : (
@@ -77,7 +108,7 @@ export default function ChatUI(props: Props) {
   return (
     <div 
       ref={messageRef}
-      className={`flex gap-2 mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'} opacity-0`}
+      className={`flex gap-2 mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'} ${isInitialLoad ? 'opacity-0' : ''}`}
     >
       {!isCurrentUser && (
         <div className="flex flex-col items-center">
@@ -89,19 +120,23 @@ export default function ChatUI(props: Props) {
               className="rounded-full object-cover"
               sizes="32px"
               priority={index < 5}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/user.webp';
+              }}
             />
           </div>
           {!isAIResponse && (
-            <p className="text-[8px] text-gray-600">{profile?.name || 'ユーザー'}</p>
+            <p className="text-[8px] text-gray-600 dark:text-gray-400">{profile?.name || 'ユーザー'}</p>
           )}
         </div>
       )}
       <div className={`max-w-[70%] ${
         isAIResponse 
-          ? 'bg-ai-message text-gray-800'
+          ? 'bg-ai-message dark:bg-ai-message/40 text-gray-800 dark:text-global-bg'
           : isCurrentUser 
-            ? 'bg-my-message text-gray-800' 
-            : 'bg-other-message text-gray-800'
+            ? 'bg-my-message dark:bg-my-message/40 text-gray-800 dark:text-global-bg' 
+            : 'bg-other-message dark:bg-other-message/40 text-gray-800 dark:text-global-bg'
       } rounded-lg p-3`}>
         <p className="text-sm">{highlightMentions(chatData.message)}</p>
       </div>
@@ -114,6 +149,10 @@ export default function ChatUI(props: Props) {
             className="rounded-full object-cover"
             sizes="32px"
             priority={index < 5}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = '/user.webp';
+            }}
           />
         </div>
       )}
