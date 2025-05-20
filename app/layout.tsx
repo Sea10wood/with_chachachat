@@ -23,10 +23,6 @@ export default async function RootLayout({
   const supabase = createServerComponentClient<Database>({ cookies })
   const { data: { session } } = await supabase.auth.getSession()
 
-  if (!session) {
-    redirect("/auth/login")
-  }
-
   return (
     <html lang="ja" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen bg-global-bg dark:bg-black`} suppressHydrationWarning>

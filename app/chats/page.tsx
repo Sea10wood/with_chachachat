@@ -7,6 +7,7 @@ import ChatUI from "@/components/chats/chat"
 import SideBar from "@/components/sidebar"
 import Loading from "@/components/loading"
 import MessagePopup from '@/components/molecules/MessagePopup'
+import { debounce } from 'lodash'
 
 const MESSAGE_LIMIT = 20;
 const SCROLL_THRESHOLD = 50;
@@ -30,6 +31,7 @@ export default function Chats() {
   const [isNearBottom, setIsNearBottom] = useState(true)
   const [showNewMessageAlert, setShowNewMessageAlert] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const scrollHeightRef = useRef<number>(0)
@@ -51,12 +53,16 @@ export default function Chats() {
 
   // メッセージの重複チェックと追加
   const addMessageIfNotExists = useCallback((message: Database["public"]["Tables"]["Chats"]["Row"]) => {
-    if (processedMessageIdsRef.current.has(message.id)) {
+    if (!message.id) return false;
+    
+    // チャンネルごとに重複チェックを行う
+    const key = `${channelName}-${message.id}`;
+    if (processedMessageIdsRef.current.has(key)) {
       return false;
     }
-    processedMessageIdsRef.current.add(message.id);
+    processedMessageIdsRef.current.add(key);
     return true;
-  }, []);
+  }, [channelName]);
 
   // チャンネル名が指定されていない場合、デフォルトチャンネルにリダイレクト
   useEffect(() => {
@@ -68,34 +74,15 @@ export default function Chats() {
   // スクロール位置の管理
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const element = e.currentTarget;
+    if (!element) return;
+
     const isNearTop = element.scrollTop < SCROLL_THRESHOLD;
     const isBottom = element.scrollHeight - element.scrollTop - element.clientHeight < BOTTOM_THRESHOLD;
 
-    console.log('Scroll position:', {
-      scrollTop: element.scrollTop,
-      scrollHeight: element.scrollHeight,
-      clientHeight: element.clientHeight,
-      isNearTop,
-      isBottom,
-      hasMore,
-      isLoadingPrev,
-      oldestMessageDate
-    });
-
     setIsNearBottom(isBottom);
-
-    // スクロール中フラグの管理
-    isScrollingRef.current = true;
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-    scrollTimeoutRef.current = setTimeout(() => {
-      isScrollingRef.current = false;
-    }, 150);
 
     // スクロール位置が上部に近づいたら過去メッセージを取得
     if (isNearTop && !isLoadingPrev && hasMore && oldestMessageDate) {
-      console.log('Fetching more messages...', { oldestMessageDate });
       scrollHeightRef.current = element.scrollHeight;
       fetchMoreMessages();
     }
@@ -104,17 +91,11 @@ export default function Chats() {
   // 過去のメッセージを取得
   const fetchMoreMessages = async () => {
     if (!oldestMessageDate || isLoadingPrev || !channelName) {
-      console.log('Skipping fetchMoreMessages:', {
-        oldestMessageDate,
-        isLoadingPrev,
-        channelName
-      });
       return;
     }
 
     setIsLoadingPrev(true);
     try {
-      console.log('Fetching messages before:', oldestMessageDate);
       const { data, error } = await supabase
         .from("Chats")
         .select("*")
@@ -129,7 +110,6 @@ export default function Chats() {
       }
 
       if (data && data.length > 0) {
-        console.log('Fetched messages:', data.length);
         // 重複チェックとIDの記録
         const uniqueMessages = data.filter(msg => addMessageIfNotExists(msg));
 
@@ -139,30 +119,30 @@ export default function Chats() {
         );
 
         // 既存のメッセージと新しいメッセージを結合
-        setMessages(prev => [...sortedMessages, ...prev]);
+        setMessages(prev => {
+          const newMessages = [...sortedMessages, ...prev];
+          // 重複を除去
+          return Array.from(new Map(newMessages.map(msg => [msg.id, msg])).values());
+        });
 
         // 最も古いメッセージの日時を更新
         if (sortedMessages.length > 0) {
-          const newOldestDate = sortedMessages[0].created_at;
-          console.log('Updating oldestMessageDate:', newOldestDate);
-          setOldestMessageDate(newOldestDate);
+          setOldestMessageDate(sortedMessages[0].created_at);
         }
 
         setHasMore(data.length === MESSAGE_LIMIT);
 
         // スクロール位置を復元
         if (messagesContainerRef.current) {
-          const newScrollHeight = messagesContainerRef.current.scrollHeight;
-          const scrollDiff = newScrollHeight - scrollHeightRef.current;
-
           requestAnimationFrame(() => {
             if (messagesContainerRef.current) {
+              const newScrollHeight = messagesContainerRef.current.scrollHeight;
+              const scrollDiff = newScrollHeight - scrollHeightRef.current;
               messagesContainerRef.current.scrollTop = scrollDiff;
             }
           });
         }
       } else {
-        console.log('No more messages to fetch');
         setHasMore(false);
       }
     } catch (error) {
@@ -184,6 +164,7 @@ export default function Chats() {
       setShowNewMessageAlert(false);
       setError(null);
       setIsLoading(true);
+      setIsInitialLoad(true);
 
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -238,6 +219,10 @@ export default function Chats() {
         setError("メッセージの取得に失敗しました");
       } finally {
         setIsLoading(false);
+        // 初期ロード完了後、少し遅延させてアニメーションを無効化
+        setTimeout(() => {
+          setIsInitialLoad(false);
+        }, 1000);
       }
     };
 
@@ -301,13 +286,7 @@ export default function Chats() {
   useEffect(() => {
     if (!channelName) return;
 
-    // 前回のチャンネルのサブスクリプションを解除
-    const cleanup = () => {
-      const channel = supabase.channel(channelName);
-      channel.unsubscribe();
-    };
-
-    // 新しいチャンネルのサブスクリプションを設定
+    let mounted = true;
     const channel = supabase.channel(channelName)
       .on(
         'postgres_changes',
@@ -318,15 +297,18 @@ export default function Chats() {
           filter: `channel=eq.${channelName}`
         },
         (payload: { new: Database["public"]["Tables"]["Chats"]["Row"] }) => {
-          const newMessage = payload.new as Database["public"]["Tables"]["Chats"]["Row"];
+          if (!mounted) return;
 
-          // 重複チェックと追加
+          const newMessage = payload.new as Database["public"]["Tables"]["Chats"]["Row"];
           if (!addMessageIfNotExists(newMessage)) return;
 
-          setMessages(prev => [...prev, newMessage]);
+          setMessages(prev => {
+            const newMessages = [...prev, newMessage];
+            // 重複を除去
+            return Array.from(new Map(newMessages.map(msg => [msg.id, msg])).values());
+          });
 
-          // 最下部にいる場合のみスクロール、そうでなければアラートを表示
-          if (isNearBottom) {
+          if (isNearBottom && messagesContainerRef.current) {
             requestAnimationFrame(() => {
               if (messagesContainerRef.current) {
                 messagesContainerRef.current.scrollTo({
@@ -337,9 +319,10 @@ export default function Chats() {
             });
           } else {
             setShowNewMessageAlert(true);
-            // 3秒後にアラートを非表示
             setTimeout(() => {
-              setShowNewMessageAlert(false);
+              if (mounted) {
+                setShowNewMessageAlert(false);
+              }
             }, 3000);
           }
         }
@@ -347,7 +330,8 @@ export default function Chats() {
       .subscribe();
 
     return () => {
-      cleanup();
+      mounted = false;
+      channel.unsubscribe();
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
@@ -388,7 +372,7 @@ export default function Chats() {
   if (!channelName) {
     return (
       <div className="flex items-center justify-center h-full bg-chat-bg dark:bg-black/40">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-global-bg"></div>
+        <Loading />
       </div>
     );
   }
@@ -455,7 +439,7 @@ export default function Chats() {
         >
           {isLoading ? (
             <div className="flex-1 relative flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-global-bg"></div>
+              <Loading />
             </div>
           ) : (
             <>
@@ -463,7 +447,7 @@ export default function Chats() {
                 <div className="sticky top-0 bg-chat-bg/80 dark:bg-black/40 backdrop-blur-sm py-2 z-10">
                   <div className="flex justify-center">
                     <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 dark:border-global-bg"></div>
+                      <Loading />
                       <span className="text-sm text-gray-700 dark:text-global-bg">過去のメッセージを読み込み中...</span>
                     </div>
                   </div>
@@ -489,7 +473,21 @@ export default function Chats() {
               )}
               <div className="space-y-4">
                 {messages.map((message, index) => (
-                  <ChatUI chatData={message} index={index} key={message.id || index} />
+                  <div
+                    key={message.id || index}
+                    className={isInitialLoad ? "animate-fade-in" : ""}
+                    style={isInitialLoad ? {
+                      animationDelay: `${index * 50}ms`,
+                      opacity: 0,
+                      animation: 'fadeIn 0.5s ease-out forwards'
+                    } : undefined}
+                  >
+                    <ChatUI 
+                      chatData={message} 
+                      index={index} 
+                      isInitialLoad={isInitialLoad}
+                    />
+                  </div>
                 ))}
               </div>
             </>
@@ -525,4 +523,29 @@ export default function Chats() {
       />
     </div>
   )
+}
+
+// スタイルの追加
+const styles = `
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+`;
+
+// スタイルを適用
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
 }

@@ -20,6 +20,11 @@ export default function Navigation({ session }: NavigationProps) {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const getSession = async () => {
@@ -70,7 +75,7 @@ export default function Navigation({ session }: NavigationProps) {
       setIsLogoutModalOpen(false)
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      router.push('/')
+      router.push('/auth/signin')
       router.refresh()
     } catch (error) {
       console.error('ログアウトエラー:', error)
@@ -97,17 +102,19 @@ export default function Navigation({ session }: NavigationProps) {
               <Link href="/" className="text-xl font-bold text-gray-800 dark:text-global-bg">
                 MeerChat
               </Link>
-              <button
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="p-1.5 rounded-lg hover:bg-global-bg dark:hover:bg-black/20 transition-colors"
-                aria-label="Toggle theme"
-              >
-                {theme === 'dark' ? (
-                  <Sun className="h-4 w-4 text-global-bg" />
-                ) : (
-                  <Moon className="h-4 w-4 text-black" />
-                )}
-              </button>
+              {mounted && (
+                <button
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className="p-1.5 rounded-lg hover:bg-global-bg dark:hover:bg-black/20 transition-colors"
+                  aria-label="Toggle theme"
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="h-4 w-4 text-global-bg" />
+                  ) : (
+                    <Moon className="h-4 w-4 text-black" />
+                  )}
+                </button>
+              )}
             </div>
 
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
