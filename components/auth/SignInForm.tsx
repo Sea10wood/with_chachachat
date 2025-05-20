@@ -111,6 +111,7 @@ export default function SignInForm() {
         onChange={(e) => setEmail(e.target.value)}
         required
         error={error}
+        className="bg-gray-50"
       />
       <FormField
         label="パスワード"
@@ -118,6 +119,7 @@ export default function SignInForm() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
+        className="bg-gray-50"
       />
       <div className="flex items-center justify-between">
         <Link
@@ -130,7 +132,7 @@ export default function SignInForm() {
       <Button
         type="submit"
         variant="primary"
-        className="w-full"
+        className="w-full bg-send-button hover:bg-send-button/80"
         isLoading={isLoading}
       >
         サインイン
@@ -141,7 +143,7 @@ export default function SignInForm() {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-50 text-gray-500">または</span>
+            <span className="px-2 bg-white text-gray-500">または</span>
           </div>
         </div>
         <div className="mt-6 grid grid-cols-2 gap-3">
@@ -149,6 +151,8 @@ export default function SignInForm() {
             type="button"
             variant="secondary"
             onClick={() => handleProviderSignIn("google")}
+            className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 opacity-50 cursor-not-allowed"
+            disabled
           >
             Googleでサインイン
           </Button>
@@ -156,6 +160,8 @@ export default function SignInForm() {
             type="button"
             variant="secondary"
             onClick={() => handleProviderSignIn("github")}
+            className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 opacity-50 cursor-not-allowed"
+            disabled
           >
             GitHubでサインイン
           </Button>

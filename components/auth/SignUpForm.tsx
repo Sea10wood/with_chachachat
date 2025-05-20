@@ -40,6 +40,7 @@ export default function SignUpForm() {
         onChange={(e) => setEmail(e.target.value)}
         required
         error={error}
+        className="bg-gray-50"
       />
       <FormField
         label="パスワード"
@@ -47,11 +48,12 @@ export default function SignUpForm() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
+        className="bg-gray-50"
       />
       <Button
         type="submit"
         variant="primary"
-        className="w-full"
+        className="w-full bg-send-button hover:bg-send-button/80"
         isLoading={isLoading}
       >
         新規登録
@@ -62,7 +64,7 @@ export default function SignUpForm() {
           href="/auth/signin"
           className="text-send-button hover:text-loading-color ml-1"
         >
-          ログイン
+          サインイン
         </Link>
       </div>
     </form>

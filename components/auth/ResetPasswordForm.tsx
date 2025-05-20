@@ -39,10 +39,10 @@ export default function ResetPasswordForm() {
           メールに記載されたリンクからパスワードを再設定してください。
         </p>
         <Link
-          href="/auth/login"
+          href="/auth/signin"
           className="text-send-button hover:text-loading-color"
         >
-          ログインページに戻る
+          サインインページに戻る
         </Link>
       </div>
     );
@@ -57,21 +57,22 @@ export default function ResetPasswordForm() {
         onChange={(e) => setEmail(e.target.value)}
         required
         error={error}
+        className="bg-gray-50"
       />
       <Button
         type="submit"
         variant="primary"
-        className="w-full"
+        className="w-full bg-send-button hover:bg-send-button/80"
         isLoading={isLoading}
       >
         リセットメールを送信
       </Button>
       <div className="text-sm text-center text-gray-600">
         <Link
-          href="/auth/login"
+          href="/auth/signin"
           className="text-send-button hover:text-loading-color"
         >
-          ログインページに戻る
+          サインインページに戻る
         </Link>
       </div>
     </form>
