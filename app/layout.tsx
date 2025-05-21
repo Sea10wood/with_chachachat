@@ -16,11 +16,29 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'みーあちゃっと',
+  title: 'MeerChat - みーあちゃっと',
   description: 'おだやかな会話を楽しむチャットアプリ',
-  icons: {
-    icon: '/meerchat.webp',
-    apple: '/meerchat.webp',
+  openGraph: {
+    title: 'MeerChat - みーあちゃっと',
+    description: 'おだやかな会話を楽しむチャットアプリ',
+    url: 'https://mienaisekkeizu.com/',
+    siteName: 'MeerChat',
+    images: [
+      {
+        url: '/ogp.png',
+        width: 1200,
+        height: 630,
+        alt: 'MeerChat',
+      },
+    ],
+    locale: 'ja_JP',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MeerChat - みーあちゃっと',
+    description: 'おだやかな会話を楽しむチャットアプリ',
+    images: ['/ogp.png'],
   },
 };
 
