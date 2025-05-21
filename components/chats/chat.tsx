@@ -31,7 +31,7 @@ export default function ChatUI(props: Props) {
       setCurrentUserId(user?.id || null);
     };
     getCurrentUser();
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -39,7 +39,7 @@ export default function ChatUI(props: Props) {
       setProfile(data);
     };
     fetchProfile();
-  }, [chatData.uid]);
+  }, [chatData.uid, supabase]);
 
   const animateMessage = useCallback(() => {
     if (!messageRef.current || !isInitialLoad || hasAnimated.current) return;
@@ -96,11 +96,14 @@ export default function ChatUI(props: Props) {
     const parts = text.split(/(@meerchat)/g);
     return parts.map((part, i) =>
       part === '@meerchat' ? (
-        <span key={i} className="bg-ai-message/80 dark:bg-ai-message/40 px-1 rounded font-medium">
+        <span
+          key={`mention-${i}-${part}`}
+          className="bg-ai-message/80 dark:bg-ai-message/40 px-1 rounded font-medium"
+        >
           {part}
         </span>
       ) : (
-        part
+        <span key={`text-${i}-${part}`}>{part}</span>
       )
     );
   };

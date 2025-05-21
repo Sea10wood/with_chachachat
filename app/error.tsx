@@ -3,7 +3,7 @@
 import Button from '@/components/atoms/Button/Button';
 import { useEffect } from 'react';
 
-export default function Error({
+export default function ErrorPage({
   error,
   reset,
 }: {
@@ -29,7 +29,14 @@ export default function Error({
           </Button>
           <Button
             variant="secondary"
-            onClick={() => (window.location.href = '/')}
+            onClick={() => {
+              window.location.href = '/';
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                window.location.href = '/';
+              }
+            }}
             className="w-full"
           >
             ホームに戻る

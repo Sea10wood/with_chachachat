@@ -23,7 +23,7 @@ export default function Button({
 
   const variantStyles = {
     primary: 'bg-send-button text-black hover:bg-loading-color focus:ring-send-button',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500',
+    secondary: 'bg-transparent text-gray-800 hover:bg-red-100 focus:ring-red-200',
     danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500',
   };
 
@@ -42,14 +42,14 @@ export default function Button({
       {...props}
     >
       {isLoading ? (
-        <span className="flex items-center justify-center">
+        <output className="flex items-center justify-center gap-2" aria-live="polite">
           <svg
-            className="animate-spin -ml-1 mr-2 h-4 w-4"
+            className="animate-spin h-4 w-4"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             role="img"
-            aria-label="読み込み中"
+            aria-hidden="true"
           >
             <title>読み込み中</title>
             <circle
@@ -66,8 +66,8 @@ export default function Button({
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          処理中...
-        </span>
+          <span>処理中...</span>
+        </output>
       ) : (
         children
       )}

@@ -3,6 +3,7 @@ import type { Database } from '@/types/supabasetype';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Button from './atoms/Button/Button';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -44,14 +45,16 @@ export default function SideBar({ profiles, setProfiles, handleClick, user }: Si
         <h2 className="text-xl font-bold mb-4 text-black dark:text-global-bg">スレッド一覧</h2>
         <div className="space-y-2">
           {threads.map((thread) => (
-            <div
+            <button
               key={thread.id}
-              className={`p-2 rounded cursor-pointer transition-all ${
+              type="button"
+              className={`w-full p-2 rounded cursor-pointer transition-all text-left ${
                 selectedId === thread.id
                   ? 'bg-send-button/20 dark:bg-send-button/10 shadow-md transform scale-[1.02] border-l-4 border-send-button'
                   : 'hover:bg-send-button/10 dark:hover:bg-send-button/5'
               }`}
               onClick={() => handleThreadClick(thread.id)}
+              aria-label={`スレッド: ${thread.name || '無題'}`}
             >
               <div className="flex items-center gap-2">
                 <div
@@ -73,7 +76,7 @@ export default function SideBar({ profiles, setProfiles, handleClick, user }: Si
                   {thread.name}
                 </span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
