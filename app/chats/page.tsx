@@ -6,6 +6,7 @@ import MessagePopup from '@/components/molecules/MessagePopup';
 import SideBar from '@/components/sidebar';
 import type { Database } from '@/types/supabasetype';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { User } from '@supabase/supabase-js';
 import { debounce } from 'lodash';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -23,7 +24,7 @@ export default function Chats() {
 
   const [inputText, setInputText] = useState('');
   const [userID, setUserID] = useState('');
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Database['public']['Tables']['Chats']['Row'][]>([]);
   const [profiles, setProfiles] = useState<Database['public']['Tables']['profiles']['Row'][]>([]);
   const [isLoading, setIsLoading] = useState(false);

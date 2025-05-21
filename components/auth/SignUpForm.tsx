@@ -4,6 +4,7 @@ import Button from '@/components/atoms/Button/Button';
 import FormField from '@/components/molecules/FormField/FormField';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { AuthError } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -48,26 +49,17 @@ export default function SignUpForm() {
     return true;
   };
 
-  const getErrorMessage = (error: any) => {
+  const getErrorMessage = (error: AuthError) => {
     const errorMessage = error.message;
     if (errorMessage.includes('User already registered')) {
       return 'このメールアドレスは既に登録されています';
     }
-    if (errorMessage.includes('Invalid email')) {
-      return '有効なメールアドレスを入力してください';
-    }
-    if (errorMessage.includes('Password should be at least 6 characters')) {
-      return 'パスワードは6文字以上で入力してください';
-    }
-    if (errorMessage.includes('Too many requests')) {
-      return '短時間に多くのリクエストが発生しました。しばらく時間をおいて再度お試しください';
-    }
-    return 'エラーが発生しました。しばらく時間をおいて再度お試しください';
+    return '登録中にエラーが発生しました';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
+    setError('');
     setIsLoading(true);
 
     if (!validateForm()) {
@@ -76,54 +68,51 @@ export default function SignUpForm() {
     }
 
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-
-      if (signUpError) {
-        console.error('Sign up error:', signUpError);
-        setError(getErrorMessage(signUpError));
-        return;
+      if (error) throw error;
+      router.push('/auth/verify-email');
+    } catch (error) {
+      if (error instanceof AuthError) {
+        setError(getErrorMessage(error));
+      } else {
+        setError('予期せぬエラーが発生しました');
       }
-
-      if (data?.user) {
-        console.log('Sign up successful:', data.user);
-        router.push('/auth/verify-email');
-      }
-    } catch (error: any) {
-      console.error('Unexpected error:', error);
-      setError(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleProviderSignUp = async (provider: 'google' | 'github') => {
+  const handleOAuthSignUp = async (provider: 'google' | 'github') => {
+    setError('');
+    setIsLoading(true);
+
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-      if (error) {
-        console.error('OAuth error:', error);
-        throw error;
+      if (error) throw error;
+    } catch (error) {
+      if (error instanceof AuthError) {
+        setError(getErrorMessage(error));
+      } else {
+        setError('予期せぬエラーが発生しました');
       }
-      console.log('OAuth data:', data);
-    } catch (error: any) {
-      console.error('OAuth unexpected error:', error);
-      setError(getErrorMessage(error));
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 animate-slide-up">
       <FormField
+        id="email"
         label="メールアドレス"
         type="email"
         value={email}
@@ -134,6 +123,7 @@ export default function SignUpForm() {
       />
       <div className="relative">
         <FormField
+          id="password"
           label="パスワード"
           type={showPassword ? 'text' : 'password'}
           value={password}
@@ -153,6 +143,7 @@ export default function SignUpForm() {
       </div>
       <div className="relative">
         <FormField
+          id="confirm-password"
           label="パスワード（確認）"
           type={showConfirmPassword ? 'text' : 'password'}
           value={confirmPassword}
@@ -197,7 +188,7 @@ export default function SignUpForm() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => handleProviderSignUp('google')}
+            onClick={() => handleOAuthSignUp('google')}
             className="bg-white dark:bg-black/40 hover:bg-gray-50 dark:hover:bg-black/60 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 opacity-50 cursor-not-allowed transition-all duration-200 text-sm py-1.5"
             disabled
           >
@@ -206,7 +197,7 @@ export default function SignUpForm() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => handleProviderSignUp('github')}
+            onClick={() => handleOAuthSignUp('github')}
             className="bg-white dark:bg-black/40 hover:bg-gray-50 dark:hover:bg-black/60 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 opacity-50 cursor-not-allowed transition-all duration-200 text-sm py-1.5"
             disabled
           >
