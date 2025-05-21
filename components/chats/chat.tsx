@@ -1,4 +1,5 @@
 'use client';
+
 import DateFormatter from '@/components/date';
 import type { Database } from '@/types/supabasetype';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -79,7 +80,6 @@ export default function ChatUI(props: Props) {
     } else {
       animateMessage();
     }
-
     // クリーンアップ関数
     return () => {
       if (animationRef.current) {

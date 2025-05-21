@@ -96,7 +96,6 @@ export default function Chats() {
     },
     [hasMore, isLoadingPrev, oldestMessageDate]
   );
-
   // 過去のメッセージを取得
   const fetchMoreMessages = async () => {
     if (!oldestMessageDate || isLoadingPrev || !channelName) {
@@ -182,6 +181,25 @@ export default function Chats() {
         if (user) {
           setUserID(user.id);
           setUser(user);
+
+          // プロフィール情報を取得
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+          if (profileError) {
+            console.error('プロフィール取得エラー:', profileError);
+          } else if (profile) {
+            setProfiles(prev => {
+              const exists = prev.some(p => p.id === profile.id);
+              if (!exists) {
+                return [...prev, profile];
+              }
+              return prev;
+            });
+          }
         }
 
         const { data, error } = await supabase
@@ -220,6 +238,31 @@ export default function Chats() {
 
     resetAndFetchMessages();
   }, [channelName, addMessageIfNotExists, supabase]);
+
+  // プロフィール情報の取得
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('name');
+
+        if (error) {
+          console.error('プロフィール取得エラー:', error);
+          return;
+        }
+
+        if (profiles) {
+          setProfiles(profiles);
+        }
+      } catch (error) {
+        console.error('プロフィール取得エラー:', error);
+      }
+    };
+
+    fetchProfiles();
+  }, []);
 
   // 初期描画後の自動スクロール
   useEffect(() => {
