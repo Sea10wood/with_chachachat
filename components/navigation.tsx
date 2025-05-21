@@ -13,7 +13,7 @@ interface NavigationProps {
   session: Session | null;
 }
 
-export default function Navigation({ session }: NavigationProps) {
+export default function Navigation({ session: initialSession }: NavigationProps) {
   const supabase = createClientComponentClient();
   const pathname = usePathname();
   const router = useRouter();
@@ -22,38 +22,20 @@ export default function Navigation({ session }: NavigationProps) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [session, setSession] = useState<Session | null>(initialSession);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('avatar_url')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profile?.avatar_url) {
-          const {
-            data: { publicUrl },
-          } = supabase.storage.from('avatars').getPublicUrl(profile.avatar_url);
-          setAvatarUrl(publicUrl);
-        } else {
-          setAvatarUrl('/user.webp');
-        }
-      }
-    };
-    getSession();
+    // 初期セッションを設定
+    setSession(initialSession);
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -69,17 +51,20 @@ export default function Navigation({ session }: NavigationProps) {
         } else {
           setAvatarUrl('/user.webp');
         }
+      } else {
+        setAvatarUrl(null);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase]);
+  }, [supabase, initialSession]);
 
   const handleSignOut = async () => {
     try {
       setIsLogoutModalOpen(false);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      setSession(null);
       router.push('/auth/signin');
       router.refresh();
     } catch (error) {
