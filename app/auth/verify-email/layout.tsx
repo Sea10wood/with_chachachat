@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'メール確認',
@@ -11,4 +11,4 @@ export default function VerifyEmailLayout({
   children: React.ReactNode;
 }) {
   return children;
-} 
+}

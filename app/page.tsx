@@ -1,37 +1,39 @@
-"use client"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Database } from "@/types/supabasetype"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
-import PageTransition from "@/components/PageTransition"
-import Loading from "@/components/loading"
+'use client';
+import PageTransition from '@/components/PageTransition';
+import Loading from '@/components/loading';
+import type { Database } from '@/types/supabasetype';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
-  const supabase = createClientComponentClient<Database>()
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
+  const supabase = createClientComponentClient<Database>();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        setIsLoading(false)
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        setIsLoading(false);
       } catch (error) {
-        console.error('Error checking user:', error)
-        setIsLoading(false)
+        console.error('Error checking user:', error);
+        setIsLoading(false);
       }
-    }
+    };
 
-    checkUser()
-  }, [supabase.auth])
+    checkUser();
+  }, [supabase.auth]);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-chat-bg dark:bg-black/40">
         <Loading />
       </div>
-    )
+    );
   }
 
   return (
@@ -57,5 +59,5 @@ export default function Home() {
         </div>
       </div>
     </PageTransition>
-  )
+  );
 }

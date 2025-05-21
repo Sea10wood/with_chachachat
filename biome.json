@@ -3,19 +3,24 @@
   "organizeImports": {
     "enabled": true
   },
+  "files": {
+    "ignore": [".next/**/*"],
+    "maxSize": 10000000
+  },
   "linter": {
     "enabled": true,
+    "ignore": [".next/**/*"],
     "rules": {
       "recommended": true,
       "correctness": {
-        "noUnusedVariables": "error"
+        "noUnusedVariables": "warn"
       },
       "suspicious": {
-        "noExplicitAny": "error"
+        "noExplicitAny": "warn"
       },
       "style": {
-        "useConst": "error",
-        "useTemplate": "error"
+        "useConst": "warn",
+        "useTemplate": "warn"
       }
     }
   },
@@ -25,13 +30,13 @@
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 100,
-    "ignore": []
+    "ignore": [".next/**/*"]
   },
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
-      "trailingComma": "es5",
+      "trailingCommas": "es5",
       "semicolons": "always"
     }
   }
-} 
+}

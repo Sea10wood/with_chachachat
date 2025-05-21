@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { resetPassword } from "../../utils/supabase/auth";
-import FormField from "@/components/molecules/FormField/FormField";
-import Button from "@/components/atoms/Button/Button";
-import Link from "next/link";
+import Button from '@/components/atoms/Button/Button';
+import FormField from '@/components/molecules/FormField/FormField';
+import Link from 'next/link';
+import { useState } from 'react';
+import { resetPassword } from '../../utils/supabase/auth';
 
 export default function ResetPasswordForm() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,10 +38,7 @@ export default function ResetPasswordForm() {
           <br />
           メールに記載されたリンクからパスワードを再設定してください。
         </p>
-        <Link
-          href="/auth/signin"
-          className="text-send-button hover:text-loading-color"
-        >
+        <Link href="/auth/signin" className="text-send-button hover:text-loading-color">
           サインインページに戻る
         </Link>
       </div>
@@ -68,13 +65,10 @@ export default function ResetPasswordForm() {
         リセットメールを送信
       </Button>
       <div className="text-sm text-center text-gray-600">
-        <Link
-          href="/auth/signin"
-          className="text-send-button hover:text-loading-color"
-        >
+        <Link href="/auth/signin" className="text-send-button hover:text-loading-color">
           サインインページに戻る
         </Link>
       </div>
     </form>
   );
-} 
+}

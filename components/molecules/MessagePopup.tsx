@@ -1,12 +1,12 @@
-import React from 'react'
-import Popup from '../atoms/Popup'
+import type React from 'react';
+import Popup from '../atoms/Popup';
 
 interface MessagePopupProps {
-  isOpen: boolean
-  onClose: () => void
-  title: string
-  message: string
-  type?: 'info' | 'warning' | 'error'
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  message: string;
+  type?: 'info' | 'warning' | 'error';
 }
 
 const MessagePopup: React.FC<MessagePopupProps> = ({
@@ -14,7 +14,7 @@ const MessagePopup: React.FC<MessagePopupProps> = ({
   onClose,
   title,
   message,
-  type = 'info'
+  type = 'info',
 }) => {
   return (
     <Popup isOpen={isOpen} onClose={onClose} type={type}>
@@ -29,7 +29,7 @@ const MessagePopup: React.FC<MessagePopupProps> = ({
         </button>
       </div>
     </Popup>
-  )
-}
+  );
+};
 
-export default MessagePopup 
+export default MessagePopup;

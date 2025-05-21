@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { FormState } from "@/types/profile";
-import { validateName } from "@/utils/validation/profile";
-import { updateProfile } from "@/utils/supabase/profile";
-import FormField from "@/components/molecules/FormField/FormField";
-import Button from "@/components/atoms/Button/Button";
+import Button from '@/components/atoms/Button/Button';
+import FormField from '@/components/molecules/FormField/FormField';
+import type { FormState } from '@/types/profile';
+import { updateProfile } from '@/utils/supabase/profile';
+import { validateName } from '@/utils/validation/profile';
+import { useState } from 'react';
 
 interface ProfileFormProps {
   name: string;
@@ -12,61 +12,56 @@ interface ProfileFormProps {
   onSuccess: (message: string) => void;
 }
 
-export default function ProfileForm({
-  name,
-  onNameChange,
-  onError,
-  onSuccess
-}: ProfileFormProps) {
+export default function ProfileForm({ name, onNameChange, onError, onSuccess }: ProfileFormProps) {
   const [formState, setFormState] = useState<FormState>({
     isSubmitting: false,
     isComplete: false,
-    validationError: null
+    validationError: null,
   });
 
   const validateForm = (): boolean => {
     const { isValid, error } = validateName(name);
-    setFormState(prev => ({
+    setFormState((prev) => ({
       ...prev,
-      validationError: error
+      validationError: error,
     }));
     return isValid;
   };
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     try {
-      setFormState(prev => ({
+      setFormState((prev) => ({
         ...prev,
         isSubmitting: true,
-        isComplete: false
+        isComplete: false,
       }));
 
       await updateProfile(name, {
         name,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       });
 
-      setFormState(prev => ({
+      setFormState((prev) => ({
         ...prev,
         isSubmitting: false,
-        isComplete: true
+        isComplete: true,
       }));
 
-      onSuccess("プロフィールを更新しました");
+      onSuccess('プロフィールを更新しました');
     } catch (error) {
       console.error('プロフィール更新エラー:', error);
-      setFormState(prev => ({
+      setFormState((prev) => ({
         ...prev,
         isSubmitting: false,
-        isComplete: false
+        isComplete: false,
       }));
-      onError("プロフィールの更新に失敗しました");
+      onError('プロフィールの更新に失敗しました');
     }
   }
 
@@ -78,7 +73,7 @@ export default function ProfileForm({
         value={name}
         onChange={(e) => {
           onNameChange(e.target.value);
-          setFormState(prev => ({ ...prev, validationError: null }));
+          setFormState((prev) => ({ ...prev, validationError: null }));
         }}
         error={formState.validationError}
         required
@@ -94,4 +89,4 @@ export default function ProfileForm({
       </Button>
     </form>
   );
-} 
+}

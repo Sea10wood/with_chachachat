@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from 'react';
 
 interface ErrorModalProps {
   message: string;
@@ -12,18 +12,17 @@ export default function ErrorModal({ message, showModal, isError = true }: Error
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center w-full md:inset-0 max-h-full bg-black/30"
       onClick={handleClose}
     >
-      <div 
-        className="relative p-4 w-full max-w-md max-h-full"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="relative p-4 w-full max-w-md max-h-full" onClick={(e) => e.stopPropagation()}>
         <div className="relative bg-chat-bg dark:bg-black/20 rounded-lg shadow">
           <div className="flex items-center justify-between p-4 md:p-5 border-b border-send-button rounded-t">
-            <h3 className={`text-xl font-semibold ${isError ? "text-loading-color" : "text-black dark:text-global-bg"}`}>
-              {isError ? "エラー" : "完了"}
+            <h3
+              className={`text-xl font-semibold ${isError ? 'text-loading-color' : 'text-black dark:text-global-bg'}`}
+            >
+              {isError ? 'エラー' : '完了'}
             </h3>
             <button
               type="button"
@@ -64,4 +63,4 @@ export default function ErrorModal({ message, showModal, isError = true }: Error
       </div>
     </div>
   );
-} 
+}

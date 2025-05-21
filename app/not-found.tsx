@@ -1,5 +1,5 @@
-import Link from "next/link";
-import Button from "@/components/atoms/Button/Button";
+import Button from '@/components/atoms/Button/Button';
+import Link from 'next/link';
 
 export default function NotFound() {
   return (
@@ -15,9 +15,7 @@ export default function NotFound() {
         </div>
         <div className="mt-8 space-y-4">
           <Link href="/" className="block w-full">
-            <Button
-              className="w-full bg-send-button text-black hover:bg-send-button/90"
-            >
+            <Button className="w-full bg-send-button text-black hover:bg-send-button/90">
               ホームに戻る
             </Button>
           </Link>
@@ -25,4 +23,4 @@ export default function NotFound() {
       </div>
     </div>
   );
-} 
+}

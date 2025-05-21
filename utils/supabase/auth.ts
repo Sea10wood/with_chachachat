@@ -1,6 +1,6 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { Provider } from "@supabase/supabase-js";
 import { createClient } from '@/utils/supabase/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { Provider } from '@supabase/supabase-js';
 import { AuthError } from '@supabase/supabase-js';
 
 export async function signIn(email: string, password: string) {
@@ -71,4 +71,4 @@ export async function verifyEmail(token: string) {
   if (error) {
     throw error;
   }
-} 
+}

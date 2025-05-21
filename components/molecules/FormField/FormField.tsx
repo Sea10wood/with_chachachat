@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React from "react";
-import { forwardRef, InputHTMLAttributes } from "react";
-import Input from "@/components/atoms/Input/Input";
+import Input from '@/components/atoms/Input/Input';
+import React from 'react';
+import { type InputHTMLAttributes, forwardRef } from 'react';
 
 export interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -13,7 +13,7 @@ export interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
-  ({ label, error, helperText, required, className = "", ...props }, ref) => {
+  ({ label, error, helperText, required, className = '', ...props }, ref) => {
     return (
       <div className="space-y-1">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -32,6 +32,6 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
   }
 );
 
-FormField.displayName = "FormField";
+FormField.displayName = 'FormField';
 
-export default FormField; 
+export default FormField;
