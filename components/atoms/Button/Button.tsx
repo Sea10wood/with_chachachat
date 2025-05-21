@@ -48,7 +48,10 @@ export default function Button({
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
+            role="img"
+            aria-label="読み込み中"
           >
+            <title>読み込み中</title>
             <circle
               className="opacity-25"
               cx="12"
