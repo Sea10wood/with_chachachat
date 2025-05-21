@@ -17,9 +17,7 @@ export default function Home() {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        await supabase.auth.getSession();
         setIsLoading(false);
       } catch (error) {
         console.error('Error checking user:', error);

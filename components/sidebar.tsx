@@ -1,20 +1,9 @@
 'use client';
-import type { Database } from '@/types/supabasetype';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import Button from './atoms/Button/Button';
 
-type Profile = Database['public']['Tables']['profiles']['Row'];
-
-interface SideBarProps {
-  profiles: Profile[];
-  setProfiles: (profiles: Profile[]) => void;
-  handleClick: (id: string) => void;
-  user: any;
-}
-
-export default function SideBar({ profiles, setProfiles, handleClick, user }: SideBarProps) {
+export default function SideBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedId, setSelectedId] = useState('');
