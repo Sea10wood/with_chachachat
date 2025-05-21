@@ -1,7 +1,76 @@
+import type { Database } from '@/types/supabasetype';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+
+// レート制限の監視用の統計情報
+interface RateLimitStats {
+  totalRequests: number;
+  limitedRequests: number;
+  lastReset: number;
+}
+
+const rateLimitStats: RateLimitStats = {
+  totalRequests: 0,
+  limitedRequests: 0,
+  lastReset: Date.now(),
+};
+
+// ユーザーごとのリクエスト履歴を保存
+interface UserRequest {
+  timestamp: number;
+}
+
+const userRequestsMap = new Map<string, { timestamp: number }[]>();
+
+// 統計情報のリセット間隔（1時間）
+const STATS_RESET_INTERVAL = 60 * 60 * 1000;
+
+// レート制限の設定
+const RATE_LIMIT_WINDOW = 60; // 60秒
+const MAX_REQUESTS_PER_WINDOW = 10; // 1分間に10リクエストまで
+const MAX_MESSAGE_LENGTH = 1000;
+
+// 統計情報のリセット
+function resetStats() {
+  const now = Date.now();
+  const timeSinceLastReset = now - rateLimitStats.lastReset;
+
+  // 統計情報をログに記録
+  console.log('Rate Limit Statistics:', {
+    period: `${timeSinceLastReset / 1000} seconds`,
+    totalRequests: rateLimitStats.totalRequests,
+    limitedRequests: rateLimitStats.limitedRequests,
+    limitPercentage:
+      rateLimitStats.totalRequests > 0
+        ? `${((rateLimitStats.limitedRequests / rateLimitStats.totalRequests) * 100).toFixed(2)}%`
+        : '0%',
+  });
+
+  // 統計情報をリセット
+  rateLimitStats.totalRequests = 0;
+  rateLimitStats.limitedRequests = 0;
+  rateLimitStats.lastReset = now;
+
+  // 古いリクエスト履歴をクリーンアップ
+  const nowSeconds = Math.floor(now / 1000);
+  userRequestsMap.forEach((requests, userId) => {
+    const validRequests = requests.filter(
+      (req: UserRequest) => req.timestamp > nowSeconds - RATE_LIMIT_WINDOW
+    );
+    if (validRequests.length === 0) {
+      userRequestsMap.delete(userId);
+    } else {
+      userRequestsMap.set(userId, validRequests);
+    }
+  });
+}
+
+// 定期的な統計情報のリセット
+if (typeof setInterval !== 'undefined') {
+  setInterval(resetStats, STATS_RESET_INTERVAL);
+}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
@@ -33,7 +102,7 @@ const SYSTEM_PROMPT = `あなたは「みーあちゃっと」という名前の
 
 export async function POST(request: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = createRouteHandlerClient<Database>({ cookies });
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -42,32 +111,66 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
     }
 
-    const { message, channel } = await request.json();
-
-    if (!message || !channel) {
-      return NextResponse.json({ error: 'メッセージとチャンネルは必須です' }, { status: 400 });
+    // CSRFトークンの検証
+    const csrfToken = request.headers.get('X-CSRF-Token');
+    if (!csrfToken || csrfToken !== session.access_token) {
+      return NextResponse.json({ error: '無効なリクエストです' }, { status: 403 });
     }
 
-    // ユーザーのメッセージを保存
+    const body = await request.json();
+    const { message, channel } = body;
+
+    // 入力バリデーション
+    if (!message || typeof message !== 'string' || message.trim() === '') {
+      return NextResponse.json({ error: 'メッセージは必須です' }, { status: 400 });
+    }
+
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      return NextResponse.json({ error: 'メッセージが長すぎます' }, { status: 400 });
+    }
+
+    if (!channel || typeof channel !== 'string') {
+      return NextResponse.json({ error: 'チャンネル名は必須です' }, { status: 400 });
+    }
+
+    // 特殊文字のエスケープ
+    const sanitizedMessage = message.replace(/[<>]/g, '');
+
+    // レート制限のチェック
+    const now = Math.floor(Date.now() / 1000);
+    const userRequests = userRequestsMap.get(session.user.id) || [];
+    const recentRequests = userRequests.filter((req) => req.timestamp > now - RATE_LIMIT_WINDOW);
+
+    if (recentRequests.length >= MAX_REQUESTS_PER_WINDOW) {
+      return NextResponse.json(
+        { error: 'レート制限を超えました。しばらく待ってから再試行してください。' },
+        { status: 429 }
+      );
+    }
+
+    // リクエストを記録
+    userRequests.push({ timestamp: now });
+    userRequestsMap.set(session.user.id, userRequests);
+
+    // メッセージを保存
     const { data: userMessage, error: insertError } = await supabase
       .from('Chats')
       .insert({
-        message,
+        message: sanitizedMessage,
+        channel,
         uid: session.user.id,
         is_ai_response: false,
-        channel,
-        created_at: new Date().toISOString(),
       })
       .select()
       .single();
 
     if (insertError) {
-      console.error('メッセージの保存エラー:', insertError);
+      console.error('メッセージ保存エラー:', insertError);
       return NextResponse.json({ error: 'メッセージの保存に失敗しました' }, { status: 500 });
     }
 
     // メッセージに@meerchatが含まれている場合のみAIが応答
-    if (message.includes('@meerchat')) {
+    if (sanitizedMessage.includes('@meerchat')) {
       try {
         const completion = await openai.chat.completions.create({
           model: 'gpt-3.5-turbo',
@@ -78,7 +181,7 @@ export async function POST(request: Request) {
             },
             {
               role: 'user',
-              content: message,
+              content: sanitizedMessage,
             },
           ],
           temperature: 0.7,
@@ -97,7 +200,6 @@ export async function POST(request: Request) {
             channel: channel,
             is_ai_response: true,
             parent_message_id: userMessage.id,
-            created_at: new Date().toISOString(),
           })
           .select()
           .single();

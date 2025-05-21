@@ -30,7 +30,7 @@ export async function signOut() {
 export async function resetPassword(email: string) {
   const supabase = createClientComponentClient();
   return await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/auth/reset-password`,
+    redirectTo: `${window.location.origin}/resetPassword/inputPassword`,
   });
 }
 

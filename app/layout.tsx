@@ -8,11 +8,20 @@ import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  fallback: ['system-ui', 'arial'],
+  preload: false,
+});
 
 export const metadata: Metadata = {
-  title: 'MeerChat',
+  title: 'みーあちゃっと',
   description: 'おだやかな会話を楽しむチャットアプリ',
+  icons: {
+    icon: '/meerchat.webp',
+    apple: '/meerchat.webp',
+  },
 };
 
 export default async function RootLayout({
@@ -28,7 +37,7 @@ export default async function RootLayout({
   return (
     <html lang="ja" suppressHydrationWarning>
       <body
-        className={`${inter.className} min-h-screen bg-global-bg dark:bg-black`}
+        className={`${inter.className} min-h-screen bg-global-bg dark:bg-black text-gray-900 dark:text-gray-100`}
         suppressHydrationWarning
       >
         <ThemeProvider>

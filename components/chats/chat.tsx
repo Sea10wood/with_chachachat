@@ -3,6 +3,7 @@
 import DateFormatter from '@/components/date';
 import type { Database } from '@/types/supabasetype';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import DOMPurify from 'dompurify';
 import { gsap } from 'gsap';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -93,7 +94,9 @@ export default function ChatUI(props: Props) {
 
   // メッセージ内の@meerchatをハイライト表示する関数
   const highlightMentions = (text: string) => {
-    const parts = text.split(/(@meerchat)/g);
+    // 入力テキストのサニタイズ
+    const sanitizedText = DOMPurify.sanitize(text);
+    const parts = sanitizedText.split(/(@meerchat)/g);
     return parts.map((part, i) =>
       part === '@meerchat' ? (
         <span
