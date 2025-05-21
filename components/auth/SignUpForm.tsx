@@ -36,8 +36,13 @@ export default function SignUpForm() {
       return false;
     }
 
-    if (password.length < 6) {
-      setError('パスワードは6文字以上で入力してください');
+    if (password.length < 12) {
+      setError('パスワードは12文字以上で入力してください');
+      return false;
+    }
+
+    if (!password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/)) {
+      setError('パスワードは大文字、小文字、数字、特殊文字を含める必要があります');
       return false;
     }
 
@@ -135,10 +140,10 @@ export default function SignUpForm() {
           type="button"
           variant="secondary"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-[38px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
+          className="absolute right-1 top-[70%] -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
           aria-label={showPassword ? 'パスワードを隠す' : 'パスワードを表示'}
         >
-          {showPassword ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
+          {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
         </Button>
       </div>
       <div className="relative">
@@ -155,13 +160,13 @@ export default function SignUpForm() {
           type="button"
           variant="secondary"
           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-          className="absolute right-3 top-[38px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
+          className="absolute right-1 top-[70%] -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
           aria-label={showConfirmPassword ? 'パスワードを隠す' : 'パスワードを表示'}
         >
           {showConfirmPassword ? (
-            <EyeIcon className="h-5 w-5" />
-          ) : (
             <EyeSlashIcon className="h-5 w-5" />
+          ) : (
+            <EyeIcon className="h-5 w-5" />
           )}
         </Button>
       </div>

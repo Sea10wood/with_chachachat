@@ -15,6 +15,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 const MESSAGE_LIMIT = 20;
 const SCROLL_THRESHOLD = 50;
 const BOTTOM_THRESHOLD = 50;
+const MAX_MESSAGE_LENGTH = 1000;
+const CHAR_COUNT_THRESHOLD = 995;
+const SESSION_TIMEOUT = 30 * 60 * 1000;
 
 export default function Chats() {
   const supabase = createClientComponentClient<Database>();
@@ -176,6 +179,7 @@ export default function Chats() {
       setIsInitialLoad(true);
 
       try {
+        // 認証状態を確認（必須ではない）
         const {
           data: { user },
         } = await supabase.auth.getUser();
@@ -203,42 +207,46 @@ export default function Chats() {
           }
         }
 
-        const { data, error } = await supabase
+        // メッセージを取得（認証状態に関係なく）
+        const { data: messages, error: messagesError } = await supabase
           .from('Chats')
           .select('*')
           .eq('channel', channelName)
           .order('created_at', { ascending: false })
           .limit(MESSAGE_LIMIT);
 
-        if (error) {
-          console.error('メッセージ取得エラー:', error);
-          throw error;
-        }
+        if (messagesError) {
+          console.error('メッセージ取得エラー:', messagesError);
+          setError('メッセージの取得に失敗しました');
+        } else if (messages) {
+          // 重複チェックとIDの記録
+          const uniqueMessages = messages.filter((msg) => addMessageIfNotExists(msg));
 
-        if (data) {
-          const uniqueMessages = data.filter((msg) => addMessageIfNotExists(msg));
+          // 時系列順にソート（古い順）
           const sortedMessages = uniqueMessages.sort(
             (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
 
           setMessages(sortedMessages);
-          setHasMore(data.length === MESSAGE_LIMIT);
-          setOldestMessageDate(sortedMessages[0]?.created_at || null);
+
+          // 最も古いメッセージの日時を記録
+          if (sortedMessages.length > 0) {
+            setOldestMessageDate(sortedMessages[0].created_at);
+          }
+
+          setHasMore(messages.length === MESSAGE_LIMIT);
         }
       } catch (error) {
-        console.error('メッセージ取得エラー:', error);
-        setError('メッセージの取得に失敗しました');
+        console.error('予期せぬエラー:', error);
+        setError('予期せぬエラーが発生しました');
       } finally {
         setIsLoading(false);
-        // 初期ロード完了後、少し遅延させてアニメーションを無効化
-        setTimeout(() => {
-          setIsInitialLoad(false);
-        }, 1000);
+        setIsInitialLoad(false);
       }
     };
 
     resetAndFetchMessages();
-  }, [channelName, addMessageIfNotExists, supabase]);
+  }, [channelName, supabase, addMessageIfNotExists]);
 
   // プロフィール情報の取得
   useEffect(() => {
@@ -346,41 +354,42 @@ export default function Chats() {
     };
   }, [channelName, addMessageIfNotExists, isNearBottom, supabase]);
 
+  // セッションタイムアウトの管理
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session) {
-          setUserID(session.user.id);
-          setUser(session.user);
-        }
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error checking user:', error);
-        setIsLoading(false);
-      }
-    };
+    const sessionTimeout = setTimeout(() => {
+      router.push('/auth/signin');
+    }, SESSION_TIMEOUT);
 
-    checkUser();
-  }, [supabase.auth]);
+    return () => clearTimeout(sessionTimeout);
+  }, [router]);
 
   const showPopup = (
     title: string,
     message: string,
     type: 'info' | 'warning' | 'error' = 'info'
   ) => {
+    const sanitizedMessage =
+      type === 'error' ? 'エラーが発生しました。しばらく時間をおいて再度お試しください。' : message;
+
     setPopupState({
       isOpen: true,
       title,
-      message,
+      message: sanitizedMessage,
       type,
     });
   };
 
   const closePopup = () => {
     setPopupState((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    // 特殊文字のエスケープ
+    const sanitizedText = text.replace(/[<>]/g, '');
+    if (sanitizedText.length <= MAX_MESSAGE_LENGTH) {
+      setInputText(sanitizedText);
+    }
   };
 
   if (!channelName) {
@@ -396,6 +405,20 @@ export default function Chats() {
     if (inputText === '' || !userID) return;
 
     try {
+      // CSRFトークンの取得
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        showPopup(
+          'セッションエラー',
+          'セッションが切れました。再度ログインしてください。',
+          'error'
+        );
+        router.push('/auth/signin');
+        return;
+      }
+
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -416,6 +439,7 @@ export default function Chats() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRF-Token': session.access_token,
         },
         body: JSON.stringify({
           message: inputText,
@@ -505,13 +529,13 @@ export default function Chats() {
         {user ? (
           <form className="p-2 border-t bg-chat-bg dark:bg-black/40" onSubmit={onSubmitNewMessage}>
             <div className="flex items-center gap-2">
-              <input
-                type="text"
+              <textarea
                 value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
+                onChange={handleInputChange}
                 placeholder="メッセージを入力..."
                 className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-send-button/20 transition-all duration-200"
-                disabled={isLoading}
+                rows={1}
+                maxLength={MAX_MESSAGE_LENGTH}
               />
               <Button
                 type="submit"
@@ -524,6 +548,11 @@ export default function Chats() {
                 送信
               </Button>
             </div>
+            {inputText.length >= CHAR_COUNT_THRESHOLD && (
+              <div className="text-right text-sm text-gray-500 mt-1">
+                {inputText.length}/{MAX_MESSAGE_LENGTH}
+              </div>
+            )}
           </form>
         ) : (
           <div className="p-2 border-t bg-chat-bg dark:bg-black/40">
