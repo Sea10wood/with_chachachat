@@ -26,7 +26,6 @@ export default function Chats() {
   const [userID, setUserID] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Database['public']['Tables']['Chats']['Row'][]>([]);
-  const [profiles, setProfiles] = useState<Database['public']['Tables']['profiles']['Row'][]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPrev, setIsLoadingPrev] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -183,25 +182,6 @@ export default function Chats() {
         if (user) {
           setUserID(user.id);
           setUser(user);
-
-          // プロフィール情報を取得
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-
-          if (profileError) {
-            console.error('プロフィール取得エラー:', profileError);
-          } else if (profile) {
-            setProfiles((prev) => {
-              const exists = prev.some((p) => p.id === profile.id);
-              if (!exists) {
-                return [...prev, profile];
-              }
-              return prev;
-            });
-          }
         }
 
         const { data, error } = await supabase
@@ -240,28 +220,6 @@ export default function Chats() {
 
     resetAndFetchMessages();
   }, [channelName, addMessageIfNotExists, supabase]);
-
-  // プロフィール情報の取得
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      try {
-        const { data: profiles, error } = await supabase.from('profiles').select('*').order('name');
-
-        if (error) {
-          console.error('プロフィール取得エラー:', error);
-          return;
-        }
-
-        if (profiles) {
-          setProfiles(profiles);
-        }
-      } catch (error) {
-        console.error('プロフィール取得エラー:', error);
-      }
-    };
-
-    fetchProfiles();
-  }, [supabase]);
 
   // 初期描画後の自動スクロール
   useEffect(() => {
@@ -437,7 +395,7 @@ export default function Chats() {
 
   return (
     <div className="flex h-[calc(100vh-40px)] bg-chat-bg dark:bg-black/40">
-      <SideBar profiles={profiles} setProfiles={setProfiles} handleClick={() => {}} user={user} />
+      <SideBar />
       <div className="flex-1 flex flex-col">
         <div
           ref={messagesContainerRef}
