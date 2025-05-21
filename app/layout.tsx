@@ -11,8 +11,30 @@ import { redirect } from 'next/navigation';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'MeerChat',
+  title: 'MeerChat - みーあちゃっと',
   description: 'おだやかな会話を楽しむチャットアプリ',
+  openGraph: {
+    title: 'MeerChat - みーあちゃっと',
+    description: 'おだやかな会話を楽しむチャットアプリ',
+    url: 'https://mienaisekkeizu.com/',
+    siteName: 'MeerChat',
+    images: [
+      {
+        url: '/ogp.png',
+        width: 1200,
+        height: 630,
+        alt: 'MeerChat',
+      },
+    ],
+    locale: 'ja_JP',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MeerChat - みーあちゃっと',
+    description: 'おだやかな会話を楽しむチャットアプリ',
+    images: ['/ogp.png'],
+  },
 };
 
 export default async function RootLayout({
