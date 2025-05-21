@@ -26,6 +26,7 @@ export default function Chats() {
   const [userID, setUserID] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Database['public']['Tables']['Chats']['Row'][]>([]);
+  const [_profiles, setProfiles] = useState<Database['public']['Tables']['profiles']['Row'][]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPrev, setIsLoadingPrev] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -192,8 +193,8 @@ export default function Chats() {
           if (profileError) {
             console.error('プロフィール取得エラー:', profileError);
           } else if (profile) {
-            setProfiles(prev => {
-              const exists = prev.some(p => p.id === profile.id);
+            setProfiles((prev) => {
+              const exists = prev.some((p) => p.id === profile.id);
               if (!exists) {
                 return [...prev, profile];
               }
@@ -243,10 +244,7 @@ export default function Chats() {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const { data: profiles, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .order('name');
+        const { data: profiles, error } = await supabase.from('profiles').select('*').order('name');
 
         if (error) {
           console.error('プロフィール取得エラー:', error);
@@ -262,7 +260,7 @@ export default function Chats() {
     };
 
     fetchProfiles();
-  }, []);
+  }, [supabase]);
 
   // 初期描画後の自動スクロール
   useEffect(() => {
