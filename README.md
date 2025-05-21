@@ -37,6 +37,7 @@
 - サーバーサイドレンダリング（SSR）対応
 - ミドルウェアによる認証保護
 - モダンなUI（Tailwind CSS）
+- メモリベースのレート制限（1分間に10リクエストまで）
 
 ## 開発環境のセットアップ
 
@@ -50,6 +51,7 @@
    ```
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   OPENAI_API_KEY=your_openai_api_key
    ```
 
 3. 開発サーバーの起動:
@@ -68,6 +70,15 @@
   ```bash
   npm run start
   ```
+
+## レート制限について
+
+このアプリケーションでは、以下のレート制限を実装しています：
+
+- 1分間に10リクエストまで
+- メモリベースの制限（サーバー再起動時にリセット）
+- ユーザーごとの制限
+- 統計情報の収集とログ記録
 
 ## ライセンス
 
