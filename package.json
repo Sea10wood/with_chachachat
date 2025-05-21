@@ -4,9 +4,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "format": "biome format .",
-    "lint": "biome lint .",
-    "check": "biome check ."
+    "format": "biome format --write .",
+    "lint": "next lint",
+    "check": "biome check .",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -30,9 +33,17 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^29.5.14",
     "@types/node": "20.3.1",
     "@types/react": "18.2.8",
     "@types/react-dom": "18.2.5",
-    "encoding": "^0.1.13"
+    "encoding": "^0.1.13",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "ts-jest": "^29.3.4",
+    "ts-node": "^10.9.2"
   }
 }
