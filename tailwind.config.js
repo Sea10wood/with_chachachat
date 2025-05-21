@@ -9,7 +9,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'black': '#262626',
+        black: '#262626',
         'global-bg': '#fef0d2',
         'chat-bg': '#fdedc9',
         'sidebar-bg': '#fde1bf',
@@ -32,4 +32,4 @@ module.exports = {
     },
   },
   plugins: [],
-}
+};

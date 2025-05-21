@@ -1,56 +1,57 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import FormField from "@/components/molecules/FormField/FormField";
-import Button from "@/components/atoms/Button/Button";
-import Link from "next/link";
+import Button from '@/components/atoms/Button/Button';
+import FormField from '@/components/molecules/FormField/FormField';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { AuthError } from '@supabase/supabase-js';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function SignInForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClientComponentClient();
 
   const validateForm = () => {
     if (!email) {
-      setError("メールアドレスを入力してください");
+      setError('メールアドレスを入力してください');
       return false;
     }
 
     if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      setError("有効なメールアドレスを入力してください");
+      setError('有効なメールアドレスを入力してください');
       return false;
     }
 
     if (!password) {
-      setError("パスワードを入力してください");
+      setError('パスワードを入力してください');
       return false;
     }
 
     return true;
   };
 
-  const getErrorMessage = (error: any) => {
+  const getErrorMessage = (error: AuthError) => {
     const errorMessage = error.message;
-    if (errorMessage.includes("Invalid login credentials")) {
-      return "メールアドレスまたはパスワードが正しくありません";
+    if (errorMessage.includes('Invalid login credentials')) {
+      return 'メールアドレスまたはパスワードが正しくありません';
     }
-    if (errorMessage.includes("Email not confirmed")) {
-      return "メールアドレスの確認が完了していません";
+    if (errorMessage.includes('Email not confirmed')) {
+      return 'メールアドレスの確認が完了していません';
     }
-    if (errorMessage.includes("Too many requests")) {
-      return "短時間に多くのリクエストが発生しました。しばらく時間をおいて再度お試しください";
+    if (errorMessage.includes('Too many requests')) {
+      return '短時間に多くのリクエストが発生しました。しばらく時間をおいて再度お試しください';
     }
-    return "エラーが発生しました。しばらく時間をおいて再度お試しください";
+    return 'ログイン中にエラーが発生しました';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
+    setError('');
     setIsLoading(true);
 
     if (!validateForm()) {
@@ -59,26 +60,28 @@ export default function SignInForm() {
     }
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
-      if (signInError) {
-        setError(getErrorMessage(signInError));
-        return;
-      }
-
+      if (error) throw error;
       router.push('/profile');
       router.refresh();
-    } catch (error: any) {
-      setError(getErrorMessage(error));
+    } catch (error) {
+      if (error instanceof AuthError) {
+        setError(getErrorMessage(error));
+      } else {
+        setError('予期せぬエラーが発生しました');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleProviderSignIn = async (provider: "google" | "github") => {
+  const handleOAuthLogin = async (provider: 'google' | 'github') => {
+    setError('');
+    setIsLoading(true);
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -87,14 +90,19 @@ export default function SignInForm() {
         },
       });
       if (error) throw error;
-    } catch (error: any) {
-      setError(getErrorMessage(error));
+    } catch (error) {
+      if (error instanceof AuthError) {
+        setError(getErrorMessage(error));
+      } else {
+        setError('予期せぬエラーが発生しました');
+      }
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <FormField
+        id="email"
         label="メールアドレス"
         type="email"
         value={email}
@@ -103,6 +111,7 @@ export default function SignInForm() {
         error={error}
       />
       <FormField
+        id="password"
         label="パスワード"
         type="password"
         value={password}
@@ -117,12 +126,7 @@ export default function SignInForm() {
           パスワードを忘れた場合
         </Link>
       </div>
-      <Button
-        type="submit"
-        variant="primary"
-        className="w-full"
-        isLoading={isLoading}
-      >
+      <Button type="submit" variant="primary" className="w-full" isLoading={isLoading}>
         サインイン
       </Button>
       <div className="mt-4">
@@ -135,22 +139,14 @@ export default function SignInForm() {
           </div>
         </div>
         <div className="mt-6 grid grid-cols-2 gap-3">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => handleProviderSignIn("google")}
-          >
+          <Button type="button" variant="secondary" onClick={() => handleOAuthLogin('google')}>
             Googleでサインイン
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => handleProviderSignIn("github")}
-          >
+          <Button type="button" variant="secondary" onClick={() => handleOAuthLogin('github')}>
             GitHubでサインイン
           </Button>
         </div>
       </div>
     </form>
   );
-} 
+}

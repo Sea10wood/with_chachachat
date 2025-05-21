@@ -1,159 +1,162 @@
-"use client"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { Database } from "@/types/supabasetype"
-import { useEffect, useState } from "react"
-import Image from "next/image"
-import ErrorModal from "./modal/errorModal";
-import { useRouter } from "next/navigation";
+'use client';
+import { Database } from '@/types/supabasetype';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import Button from './atoms/Button/Button';
+import ErrorModal from './modal/errorModal';
 
 export default function ProfileEdit() {
-  const supabase = createClientComponentClient()
-  const router = useRouter()
-  const [name, setName] = useState("")
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [showErrorModal, setShowErrorModal] = useState(false)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const supabase = createClientComponentClient();
+  const router = useRouter();
+  const [name, setName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    getData()
-  }, [])
+    getData();
+  }, []);
 
   async function getData() {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/')
-        return
+        router.push('/');
+        return;
       }
 
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('name, avatar_url')
         .eq('id', user.id)
-        .single()
+        .single();
 
       if (error) {
         if (error.code === 'PGRST116') {
           // プロフィールが存在しない場合は作成
-          const { error: createError } = await supabase
-            .from('profiles')
-            .insert({
-              id: user.id,
-              name: '新しいユーザー',
-              avatar_url: '/user.webp',
-              updated_at: new Date().toISOString()
-            })
-          
-          if (createError) throw createError
-          
-          setName('新しいユーザー')
-          setAvatarUrl('/user.webp')
+          const { error: createError } = await supabase.from('profiles').insert({
+            id: user.id,
+            name: '新しいユーザー',
+            avatar_url: '/user.webp',
+            updated_at: new Date().toISOString(),
+          });
+
+          if (createError) throw createError;
+
+          setName('新しいユーザー');
+          setAvatarUrl('/user.webp');
         } else {
-          throw error
+          throw error;
         }
       } else if (profile) {
-        setName(profile.name || '')
-        setAvatarUrl(profile.avatar_url)
+        setName(profile.name || '');
+        setAvatarUrl(profile.avatar_url);
       }
     } catch (error) {
-      console.error('プロフィール取得エラー:', error)
-      setError("プロフィールの取得に失敗しました")
-      setShowErrorModal(true)
+      console.error('プロフィール取得エラー:', error);
+      setError('プロフィールの取得に失敗しました');
+      setShowErrorModal(true);
     }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+    event.preventDefault();
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("ユーザーが見つかりません")
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error('ユーザーが見つかりません');
 
       const { error } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           name,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', user.id)
+        .eq('id', user.id);
 
-      if (error) throw error
-      setSuccessMessage("プロフィールを更新しました")
-      setError(null)
-      setShowErrorModal(true)
-      router.push('/chats')
+      if (error) throw error;
+      setSuccessMessage('プロフィールを更新しました');
+      setError(null);
+      setShowErrorModal(true);
+      router.push('/chats');
     } catch (error) {
-      console.error('プロフィール更新エラー:', error)
-      setError("プロフィールの更新に失敗しました")
-      setSuccessMessage(null)
-      setShowErrorModal(true)
+      console.error('プロフィール更新エラー:', error);
+      setError('プロフィールの更新に失敗しました');
+      setSuccessMessage(null);
+      setShowErrorModal(true);
     }
   }
 
   async function uploadAvatar(event: React.ChangeEvent<HTMLInputElement>) {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       if (!event.target.files || event.target.files.length === 0) {
-        throw new Error('画像を選択してください')
+        throw new Error('画像を選択してください');
       }
 
-      const file = event.target.files[0]
-      const fileExt = file.name.split('.').pop()
-      const fileSize = file.size / 1024 / 1024 // MBに変換
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileSize = file.size / 1024 / 1024; // MBに変換
 
       if (fileSize > 1) {
-        throw new Error('ファイルサイズは1MB以下にしてください')
+        throw new Error('ファイルサイズは1MB以下にしてください');
       }
 
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("ユーザーが見つかりません")
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error('ユーザーが見つかりません');
 
       // 古いアバターを削除
-      if (avatarUrl && avatarUrl.startsWith('http')) {
-        const oldPath = avatarUrl.split('/').pop()
+      if (avatarUrl?.startsWith('http')) {
+        const oldPath = avatarUrl.split('/').pop();
         if (oldPath) {
-          await supabase.storage.from('avatars').remove([oldPath])
+          await supabase.storage.from('avatars').remove([oldPath]);
         }
       }
 
-      const filePath = `${user.id}-${Math.random()}.${fileExt}`
+      const filePath = `${user.id}-${Math.random()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        })
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
 
-      if (uploadError) throw uploadError
+      if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath)
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('avatars').getPublicUrl(filePath);
 
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           avatar_url: publicUrl,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', user.id)
+        .eq('id', user.id);
 
-      if (updateError) throw updateError
+      if (updateError) throw updateError;
 
-      setAvatarUrl(publicUrl)
-      setSuccessMessage("アバターを更新しました")
-      setError(null)
-      setShowErrorModal(true)
-      router.push('/chats')
+      setAvatarUrl(publicUrl);
+      setSuccessMessage('アバターを更新しました');
+      setError(null);
+      setShowErrorModal(true);
+      router.push('/chats');
     } catch (error) {
-      console.error('アバターアップロードエラー:', error)
-      setError("アバターの更新に失敗しました")
-      setSuccessMessage(null)
-      setShowErrorModal(true)
+      console.error('アバターアップロードエラー:', error);
+      setError('アバターの更新に失敗しました');
+      setSuccessMessage(null);
+      setShowErrorModal(true);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -195,13 +198,18 @@ export default function ProfileEdit() {
                 className="hidden"
               />
             </label>
-            {isLoading && <p className="text-sm text-black/70 dark:text-global-bg/70">アップロード中...</p>}
+            {isLoading && (
+              <p className="text-sm text-black/70 dark:text-global-bg/70">アップロード中...</p>
+            )}
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-black dark:text-global-bg mb-1">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-black dark:text-global-bg mb-1"
+            >
               ユーザー名
             </label>
             <input
@@ -214,21 +222,22 @@ export default function ProfileEdit() {
               required
             />
           </div>
-          <button
+          <Button
             type="submit"
+            variant="primary"
             className="w-full bg-send-button text-black dark:text-global-bg py-2 rounded-lg hover:bg-send-button/80 transition-colors"
           >
             保存
-          </button>
+          </Button>
         </form>
       </div>
       {showErrorModal && (
         <ErrorModal
-          message={error || successMessage || ""}
+          message={error || successMessage || ''}
           showModal={handleCloseModal}
           isError={!!error}
         />
       )}
     </div>
   );
-} 
+}

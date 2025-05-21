@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { gsap } from "gsap";
+import { gsap } from 'gsap';
+import { useEffect, useRef, useState } from 'react';
 
 interface PageTransitionProps {
   children: React.ReactNode;
@@ -35,10 +35,10 @@ export default function PageTransition({ children }: PageTransitionProps) {
         opacity: 1,
         y: 0,
         duration: 0.8,
-        ease: "power3.out",
+        ease: 'power3.out',
         onComplete: () => {
           // アニメーション完了後の処理
-          gsap.set(containerRef.current, { clearProps: "all" });
+          gsap.set(containerRef.current, { clearProps: 'all' });
         },
       });
     }, containerRef);
@@ -49,15 +49,15 @@ export default function PageTransition({ children }: PageTransitionProps) {
   }, [isReady]);
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className="min-h-screen"
-      style={{ 
+      style={{
         opacity: 0,
-        transform: "translateY(30px)",
+        transform: 'translateY(30px)',
       }}
     >
       {children}
     </div>
   );
-} 
+}

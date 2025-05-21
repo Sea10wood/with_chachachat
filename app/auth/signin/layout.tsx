@@ -1,8 +1,8 @@
-import { Metadata } from "next";
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "サインイン",
-  description: "アカウントにサインインします"
+  title: 'サインイン',
+  description: 'アカウントにサインインします',
 };
 
 export default function SignInLayout({
@@ -11,4 +11,4 @@ export default function SignInLayout({
   children: React.ReactNode;
 }) {
   return children;
-} 
+}

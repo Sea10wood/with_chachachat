@@ -1,8 +1,8 @@
-import { Metadata } from "next";
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "新規登録",
-  description: "新しいアカウントを作成します"
+  title: '新規登録',
+  description: '新しいアカウントを作成します',
 };
 
 export default function SignUpLayout({
@@ -11,4 +11,4 @@ export default function SignUpLayout({
   children: React.ReactNode;
 }) {
   return children;
-} 
+}

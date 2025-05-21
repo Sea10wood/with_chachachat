@@ -1,30 +1,33 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { resetPassword } from "../../utils/supabase/auth";
-import FormField from "@/components/molecules/FormField/FormField";
-import Button from "@/components/atoms/Button/Button";
-import Link from "next/link";
+import Button from '@/components/atoms/Button/Button';
+import FormField from '@/components/molecules/FormField/FormField';
+import { AuthError } from '@supabase/supabase-js';
+import Link from 'next/link';
+import { useState } from 'react';
+import { resetPassword } from '../../utils/supabase/auth';
 
 export default function ResetPasswordForm() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(false);
+    setError('');
     setIsLoading(true);
 
     try {
       const { error } = await resetPassword(email);
       if (error) throw error;
-
       setSuccess(true);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      if (error instanceof AuthError) {
+        setError(error.message);
+      } else {
+        setError('予期せぬエラーが発生しました');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -38,10 +41,7 @@ export default function ResetPasswordForm() {
           <br />
           メールに記載されたリンクからパスワードを再設定してください。
         </p>
-        <Link
-          href="/auth/signin"
-          className="text-send-button hover:text-loading-color"
-        >
+        <Link href="/auth/signin" className="text-send-button hover:text-loading-color">
           サインインページに戻る
         </Link>
       </div>
@@ -51,13 +51,14 @@ export default function ResetPasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <FormField
+        id="email"
         label="メールアドレス"
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
         error={error}
-        className="bg-gray-50"
+        className="bg-gray-50 dark:bg-black/40 transition-all duration-200 focus:ring-2 focus:ring-send-button/20 text-gray-900 dark:text-gray-100"
       />
       <Button
         type="submit"
@@ -68,13 +69,10 @@ export default function ResetPasswordForm() {
         リセットメールを送信
       </Button>
       <div className="text-sm text-center text-gray-600">
-        <Link
-          href="/auth/signin"
-          className="text-send-button hover:text-loading-color"
-        >
+        <Link href="/auth/signin" className="text-send-button hover:text-loading-color">
           サインインページに戻る
         </Link>
       </div>
     </form>
   );
-} 
+}

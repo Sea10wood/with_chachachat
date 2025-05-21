@@ -1,8 +1,8 @@
-import { Metadata } from "next";
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "パスワードリセット",
-  description: "パスワードをリセットします"
+  title: 'パスワードリセット',
+  description: 'パスワードをリセットします',
 };
 
 export default function ResetPasswordLayout({
@@ -11,4 +11,4 @@ export default function ResetPasswordLayout({
   children: React.ReactNode;
 }) {
   return children;
-} 
+}

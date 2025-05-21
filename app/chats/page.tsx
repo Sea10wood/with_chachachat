@@ -1,69 +1,74 @@
-"use client"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { Database } from "@/types/supabasetype"
-import { useEffect, useState, useRef, useCallback } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import ChatUI from "@/components/chats/chat"
-import SideBar from "@/components/sidebar"
-import Loading from "@/components/loading"
-import MessagePopup from '@/components/molecules/MessagePopup'
-import { debounce } from 'lodash'
-import Link from "next/link"
+'use client';
+import Button from '@/components/atoms/Button/Button';
+import ChatUI from '@/components/chats/chat';
+import Loading from '@/components/loading';
+import MessagePopup from '@/components/molecules/MessagePopup';
+import SideBar from '@/components/sidebar';
+import type { Database } from '@/types/supabasetype';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { User } from '@supabase/supabase-js';
+import { debounce } from 'lodash';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const MESSAGE_LIMIT = 20;
 const SCROLL_THRESHOLD = 50;
 const BOTTOM_THRESHOLD = 50;
 
 export default function Chats() {
-  const supabase = createClientComponentClient<Database>()
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const channelName = searchParams.get("channel_name");
+  const supabase = createClientComponentClient<Database>();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const channelName = searchParams.get('channel_name');
 
-  const [inputText, setInputText] = useState("")
-  const [userID, setUserID] = useState("")
-  const [user, setUser] = useState<any>(null)
-  const [messages, setMessages] = useState<Database["public"]["Tables"]["Chats"]["Row"][]>([])
-  const [profiles, setProfiles] = useState<Database["public"]["Tables"]["profiles"]["Row"][]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isLoadingPrev, setIsLoadingPrev] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
-  const [oldestMessageDate, setOldestMessageDate] = useState<string | null>(null)
-  const [isNearBottom, setIsNearBottom] = useState(true)
-  const [showNewMessageAlert, setShowNewMessageAlert] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isInitialLoad, setIsInitialLoad] = useState(true)
+  const [inputText, setInputText] = useState('');
+  const [userID, setUserID] = useState('');
+  const [user, setUser] = useState<User | null>(null);
+  const [messages, setMessages] = useState<Database['public']['Tables']['Chats']['Row'][]>([]);
+  const [_profiles, setProfiles] = useState<Database['public']['Tables']['profiles']['Row'][]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingPrev, setIsLoadingPrev] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [oldestMessageDate, setOldestMessageDate] = useState<string | null>(null);
+  const [isNearBottom, setIsNearBottom] = useState(true);
+  const [showNewMessageAlert, setShowNewMessageAlert] = useState(false);
+  const [_error, setError] = useState<string | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  const messagesContainerRef = useRef<HTMLDivElement>(null)
-  const scrollHeightRef = useRef<number>(0)
-  const isScrollingRef = useRef(false)
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>()
-  const processedMessageIdsRef = useRef<Set<string>>(new Set())
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const scrollHeightRef = useRef<number>(0);
+  const _isScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+  const processedMessageIdsRef = useRef<Set<string>>(new Set());
 
   const [popupState, setPopupState] = useState<{
-    isOpen: boolean
-    title: string
-    message: string
-    type: 'info' | 'warning' | 'error'
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'info' | 'warning' | 'error';
   }>({
     isOpen: false,
     title: '',
     message: '',
-    type: 'info'
-  })
+    type: 'info',
+  });
 
   // メッセージの重複チェックと追加
-  const addMessageIfNotExists = useCallback((message: Database["public"]["Tables"]["Chats"]["Row"]) => {
-    if (!message.id) return false;
-    
-    // チャンネルごとに重複チェックを行う
-    const key = `${channelName}-${message.id}`;
-    if (processedMessageIdsRef.current.has(key)) {
-      return false;
-    }
-    processedMessageIdsRef.current.add(key);
-    return true;
-  }, [channelName]);
+  const addMessageIfNotExists = useCallback(
+    (message: Database['public']['Tables']['Chats']['Row']) => {
+      if (!message.id) return false;
+
+      // チャンネルごとに重複チェックを行う
+      const key = `${channelName}-${message.id}`;
+      if (processedMessageIdsRef.current.has(key)) {
+        return false;
+      }
+      processedMessageIdsRef.current.add(key);
+      return true;
+    },
+    [channelName]
+  );
 
   // チャンネル名が指定されていない場合、デフォルトチャンネルにリダイレクト
   useEffect(() => {
@@ -73,22 +78,25 @@ export default function Chats() {
   }, [channelName, router]);
 
   // スクロール位置の管理
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const element = e.currentTarget;
-    if (!element) return;
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      const element = e.currentTarget;
+      if (!element) return;
 
-    const isNearTop = element.scrollTop < SCROLL_THRESHOLD;
-    const isBottom = element.scrollHeight - element.scrollTop - element.clientHeight < BOTTOM_THRESHOLD;
+      const isNearTop = element.scrollTop < SCROLL_THRESHOLD;
+      const isBottom =
+        element.scrollHeight - element.scrollTop - element.clientHeight < BOTTOM_THRESHOLD;
 
-    setIsNearBottom(isBottom);
+      setIsNearBottom(isBottom);
 
-    // スクロール位置が上部に近づいたら過去メッセージを取得
-    if (isNearTop && !isLoadingPrev && hasMore && oldestMessageDate) {
-      scrollHeightRef.current = element.scrollHeight;
-      fetchMoreMessages();
-    }
-  }, [hasMore, isLoadingPrev, oldestMessageDate]);
-
+      // スクロール位置が上部に近づいたら過去メッセージを取得
+      if (isNearTop && !isLoadingPrev && hasMore && oldestMessageDate) {
+        scrollHeightRef.current = element.scrollHeight;
+        fetchMoreMessages();
+      }
+    },
+    [hasMore, isLoadingPrev, oldestMessageDate]
+  );
   // 過去のメッセージを取得
   const fetchMoreMessages = async () => {
     if (!oldestMessageDate || isLoadingPrev || !channelName) {
@@ -98,32 +106,32 @@ export default function Chats() {
     setIsLoadingPrev(true);
     try {
       const { data, error } = await supabase
-        .from("Chats")
-        .select("*")
+        .from('Chats')
+        .select('*')
         .eq('channel', channelName)
         .lt('created_at', oldestMessageDate)
-        .order("created_at", { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(MESSAGE_LIMIT);
 
       if (error) {
-        console.error("過去メッセージ取得エラー:", error);
+        console.error('過去メッセージ取得エラー:', error);
         return;
       }
 
       if (data && data.length > 0) {
         // 重複チェックとIDの記録
-        const uniqueMessages = data.filter(msg => addMessageIfNotExists(msg));
+        const uniqueMessages = data.filter((msg) => addMessageIfNotExists(msg));
 
         // 時系列順にソート（古い順）
-        const sortedMessages = uniqueMessages.sort((a, b) =>
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        const sortedMessages = uniqueMessages.sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
 
         // 既存のメッセージと新しいメッセージを結合
-        setMessages(prev => {
+        setMessages((prev) => {
           const newMessages = [...sortedMessages, ...prev];
           // 重複を除去
-          return Array.from(new Map(newMessages.map(msg => [msg.id, msg])).values());
+          return Array.from(new Map(newMessages.map((msg) => [msg.id, msg])).values());
         });
 
         // 最も古いメッセージの日時を更新
@@ -147,7 +155,7 @@ export default function Chats() {
         setHasMore(false);
       }
     } catch (error) {
-      console.error("予期せぬエラー:", error);
+      console.error('予期せぬエラー:', error);
     } finally {
       setIsLoadingPrev(false);
     }
@@ -168,7 +176,9 @@ export default function Chats() {
       setIsInitialLoad(true);
 
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
           setUserID(user.id);
           setUser(user);
@@ -183,8 +193,8 @@ export default function Chats() {
           if (profileError) {
             console.error('プロフィール取得エラー:', profileError);
           } else if (profile) {
-            setProfiles(prev => {
-              const exists = prev.some(p => p.id === profile.id);
+            setProfiles((prev) => {
+              const exists = prev.some((p) => p.id === profile.id);
               if (!exists) {
                 return [...prev, profile];
               }
@@ -194,21 +204,21 @@ export default function Chats() {
         }
 
         const { data, error } = await supabase
-          .from("Chats")
-          .select("*")
+          .from('Chats')
+          .select('*')
           .eq('channel', channelName)
-          .order("created_at", { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(MESSAGE_LIMIT);
 
         if (error) {
-          console.error("メッセージ取得エラー:", error);
+          console.error('メッセージ取得エラー:', error);
           throw error;
         }
 
         if (data) {
-          const uniqueMessages = data.filter(msg => addMessageIfNotExists(msg));
-          const sortedMessages = uniqueMessages.sort((a, b) =>
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          const uniqueMessages = data.filter((msg) => addMessageIfNotExists(msg));
+          const sortedMessages = uniqueMessages.sort(
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
 
           setMessages(sortedMessages);
@@ -216,8 +226,8 @@ export default function Chats() {
           setOldestMessageDate(sortedMessages[0]?.created_at || null);
         }
       } catch (error) {
-        console.error("メッセージ取得エラー:", error);
-        setError("メッセージの取得に失敗しました");
+        console.error('メッセージ取得エラー:', error);
+        setError('メッセージの取得に失敗しました');
       } finally {
         setIsLoading(false);
         // 初期ロード完了後、少し遅延させてアニメーションを無効化
@@ -228,16 +238,13 @@ export default function Chats() {
     };
 
     resetAndFetchMessages();
-  }, [channelName]);
+  }, [channelName, addMessageIfNotExists, supabase]);
 
   // プロフィール情報の取得
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const { data: profiles, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .order('name');
+        const { data: profiles, error } = await supabase.from('profiles').select('*').order('name');
 
         if (error) {
           console.error('プロフィール取得エラー:', error);
@@ -253,7 +260,7 @@ export default function Chats() {
     };
 
     fetchProfiles();
-  }, []);
+  }, [supabase]);
 
   // 初期描画後の自動スクロール
   useEffect(() => {
@@ -262,7 +269,7 @@ export default function Chats() {
         if (messagesContainerRef.current) {
           messagesContainerRef.current.scrollTo({
             top: messagesContainerRef.current.scrollHeight,
-            behavior: 'instant'
+            behavior: 'instant',
           });
         }
       });
@@ -276,7 +283,7 @@ export default function Chats() {
         if (messagesContainerRef.current) {
           messagesContainerRef.current.scrollTo({
             top: messagesContainerRef.current.scrollHeight,
-            behavior: 'smooth'
+            behavior: 'smooth',
           });
         }
       });
@@ -288,25 +295,25 @@ export default function Chats() {
     if (!channelName) return;
 
     let mounted = true;
-    const channel = supabase.channel(channelName)
+    const channel = supabase
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'Chats',
-          filter: `channel=eq.${channelName}`
+          filter: `channel=eq.${channelName}`,
         },
-        (payload: { new: Database["public"]["Tables"]["Chats"]["Row"] }) => {
+        (payload: { new: Database['public']['Tables']['Chats']['Row'] }) => {
           if (!mounted) return;
 
-          const newMessage = payload.new as Database["public"]["Tables"]["Chats"]["Row"];
+          const newMessage = payload.new as Database['public']['Tables']['Chats']['Row'];
           if (!addMessageIfNotExists(newMessage)) return;
 
-          setMessages(prev => {
+          setMessages((prev) => {
             const newMessages = [...prev, newMessage];
-            // 重複を除去
-            return Array.from(new Map(newMessages.map(msg => [msg.id, msg])).values());
+            return Array.from(new Map(newMessages.map((msg) => [msg.id, msg])).values());
           });
 
           if (isNearBottom && messagesContainerRef.current) {
@@ -314,7 +321,7 @@ export default function Chats() {
               if (messagesContainerRef.current) {
                 messagesContainerRef.current.scrollTo({
                   top: messagesContainerRef.current.scrollHeight,
-                  behavior: 'smooth'
+                  behavior: 'smooth',
                 });
               }
             });
@@ -337,38 +344,44 @@ export default function Chats() {
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [channelName, addMessageIfNotExists, isNearBottom]);
+  }, [channelName, addMessageIfNotExists, isNearBottom, supabase]);
 
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (session) {
-          setUserID(session.user.id)
-          setUser(session.user)
+          setUserID(session.user.id);
+          setUser(session.user);
         }
-        setIsLoading(false)
+        setIsLoading(false);
       } catch (error) {
-        console.error('Error checking user:', error)
-        setIsLoading(false)
+        console.error('Error checking user:', error);
+        setIsLoading(false);
       }
-    }
+    };
 
-    checkUser()
-  }, [supabase.auth])
+    checkUser();
+  }, [supabase.auth]);
 
-  const showPopup = (title: string, message: string, type: 'info' | 'warning' | 'error' = 'info') => {
+  const showPopup = (
+    title: string,
+    message: string,
+    type: 'info' | 'warning' | 'error' = 'info'
+  ) => {
     setPopupState({
       isOpen: true,
       title,
       message,
-      type
-    })
-  }
+      type,
+    });
+  };
 
   const closePopup = () => {
-    setPopupState(prev => ({ ...prev, isOpen: false }))
-  }
+    setPopupState((prev) => ({ ...prev, isOpen: false }));
+  };
 
   if (!channelName) {
     return (
@@ -379,8 +392,8 @@ export default function Chats() {
   }
 
   const onSubmitNewMessage = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (inputText === "" || !userID) return;
+    event.preventDefault();
+    if (inputText === '' || !userID) return;
 
     try {
       const { data: profile, error: profileError } = await supabase
@@ -395,11 +408,7 @@ export default function Chats() {
       }
 
       if (!profile) {
-        showPopup(
-          'プロフィール設定が必要です',
-          '投稿前にユーザ名を設定してください。',
-          'warning'
-        )
+        showPopup('プロフィール設定が必要です', '投稿前にユーザ名を設定してください。', 'warning');
         return;
       }
 
@@ -410,7 +419,7 @@ export default function Chats() {
         },
         body: JSON.stringify({
           message: inputText,
-          channel: channelName
+          channel: channelName,
         }),
       });
 
@@ -418,22 +427,18 @@ export default function Chats() {
         throw new Error('メッセージ送信に失敗しました');
       }
 
-      setInputText("");
+      setInputText('');
     } catch (error) {
-      console.error("エラー:", error);
-      showPopup(
-        'エラーが発生しました',
-        'メッセージの送信に失敗しました。',
-        'error'
-      )
+      console.error('エラー:', error);
+      showPopup('エラーが発生しました', 'メッセージの送信に失敗しました。', 'error');
     }
-  }
+  };
 
   return (
     <div className="flex h-[calc(100vh-40px)] bg-chat-bg dark:bg-black/40">
-      <SideBar profiles={profiles} setProfiles={setProfiles} handleClick={() => {}} user={user} />
+      <SideBar />
       <div className="flex-1 flex flex-col">
-        <div 
+        <div
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto p-4 flex flex-col bg-chat-bg dark:bg-black/40"
           onScroll={handleScroll}
@@ -449,13 +454,16 @@ export default function Chats() {
                   <div className="flex justify-center">
                     <div className="flex items-center gap-2">
                       <Loading />
-                      <span className="text-sm text-gray-700 dark:text-global-bg">過去のメッセージを読み込み中...</span>
+                      <span className="text-sm text-gray-700 dark:text-global-bg">
+                        過去のメッセージを読み込み中...
+                      </span>
                     </div>
                   </div>
                 </div>
               )}
               {showNewMessageAlert && (
-                <div 
+                <Button
+                  type="button"
                   className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-chat-bg dark:bg-black/40 text-gray-700 dark:text-global-bg px-4 py-2 rounded-full cursor-pointer shadow-lg hover:bg-chat-bg/80 dark:hover:bg-black/60 transition-colors"
                   onClick={() => {
                     setShowNewMessageAlert(false);
@@ -463,31 +471,31 @@ export default function Chats() {
                       if (messagesContainerRef.current) {
                         messagesContainerRef.current.scrollTo({
                           top: messagesContainerRef.current.scrollHeight,
-                          behavior: 'smooth'
+                          behavior: 'smooth',
                         });
                       }
                     });
                   }}
                 >
                   新しいメッセージがあります
-                </div>
+                </Button>
               )}
               <div className="space-y-4">
                 {messages.map((message, index) => (
                   <div
                     key={message.id || index}
-                    className={isInitialLoad ? "animate-fade-in" : ""}
-                    style={isInitialLoad ? {
-                      animationDelay: `${index * 50}ms`,
-                      opacity: 0,
-                      animation: 'fadeIn 0.5s ease-out forwards'
-                    } : undefined}
+                    className={isInitialLoad ? 'animate-fade-in' : ''}
+                    style={
+                      isInitialLoad
+                        ? {
+                            animationDelay: `${index * 50}ms`,
+                            opacity: 0,
+                            animation: 'fadeIn 0.5s ease-out forwards',
+                          }
+                        : undefined
+                    }
                   >
-                    <ChatUI 
-                      chatData={message} 
-                      index={index} 
-                      isInitialLoad={isInitialLoad}
-                    />
+                    <ChatUI chatData={message} index={index} isInitialLoad={isInitialLoad} />
                   </div>
                 ))}
               </div>
@@ -496,23 +504,25 @@ export default function Chats() {
         </div>
         {user ? (
           <form className="p-2 border-t bg-chat-bg dark:bg-black/40" onSubmit={onSubmitNewMessage}>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <textarea
-                  className="w-full p-2 border rounded-lg resize-none bg-input-bg dark:bg-black/40 text-gray-900 dark:text-global-bg placeholder-gray-500 dark:placeholder-gray-400"
-                  rows={2}
-                  placeholder="メッセージを入力..."
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                />
-              </div>
-              <button
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="メッセージを入力..."
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-send-button/20 transition-all duration-200"
+                disabled={isLoading}
+              />
+              <Button
                 type="submit"
-                disabled={inputText === ""}
-                className="px-3 py-1.5 bg-send-button text-gray-700 dark:text-global-bg rounded-lg disabled:opacity-50 text-sm hover:bg-send-button/80 transition-colors"
+                variant="primary"
+                disabled={isLoading || !inputText.trim()}
+                className={`px-4 py-2 rounded-lg bg-send-button text-white font-medium transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
+                  (isLoading || !inputText.trim()) && 'opacity-50 cursor-not-allowed'
+                }`}
               >
                 送信
-              </button>
+              </Button>
             </div>
           </form>
         ) : (
@@ -539,7 +549,7 @@ export default function Chats() {
         type={popupState.type}
       />
     </div>
-  )
+  );
 }
 
 // スタイルの追加

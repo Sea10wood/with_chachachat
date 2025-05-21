@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
 import { verifyEmail } from '@/utils/supabase/auth';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 export default async function VerifyEmailPage({
   searchParams,
@@ -37,7 +37,7 @@ export default async function VerifyEmailPage({
         </div>
       </div>
     );
-  } catch (error) {
+  } catch (_error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
@@ -59,4 +59,4 @@ export default async function VerifyEmailPage({
       </div>
     );
   }
-} 
+}

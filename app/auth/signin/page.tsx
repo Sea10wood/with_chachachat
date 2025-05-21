@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import SignInForm from "@/components/auth/SignInForm";
-import Link from "next/link";
-import PageTransition from "@/components/PageTransition";
+import PageTransition from '@/components/PageTransition';
+import SignInForm from '@/components/auth/SignInForm';
+import Link from 'next/link';
 
 export default function SignInPage() {
   return (
@@ -14,7 +14,7 @@ export default function SignInPage() {
               アカウントにサインイン
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-              または{" "}
+              または{' '}
               <Link
                 href="/auth/signup"
                 className="font-medium text-send-button hover:text-loading-color transition-colors duration-200"
@@ -28,4 +28,4 @@ export default function SignInPage() {
       </div>
     </PageTransition>
   );
-} 
+}

@@ -1,10 +1,10 @@
-"use client"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import ErrorModal from "../modal/errorModal";
-import AvatarUpload from "./AvatarUpload";
-import ProfileForm from "./ProfileForm";
+'use client';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import ErrorModal from '../modal/errorModal';
+import AvatarUpload from './AvatarUpload';
+import ProfileForm from './ProfileForm';
 
 type ProfileState = {
   isLoading: boolean;
@@ -16,13 +16,13 @@ type ProfileState = {
 export default function ProfileEdit() {
   const supabase = createClientComponentClient();
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [name, setName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [state, setState] = useState<ProfileState>({
     isLoading: true,
     isComplete: false,
     error: null,
-    successMessage: null
+    successMessage: null,
   });
   const [showErrorModal, setShowErrorModal] = useState(false);
 
@@ -32,14 +32,16 @@ export default function ProfileEdit() {
 
   async function initializeProfile() {
     try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      setState((prev) => ({ ...prev, isLoading: true }));
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
-        setState(prev => ({ 
-          ...prev, 
-          isLoading: false, 
-          error: "認証エラー: ログインしてください" 
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: '認証エラー: ログインしてください',
         }));
         router.push('/');
         return;
@@ -62,52 +64,50 @@ export default function ProfileEdit() {
         setAvatarUrl(profile.avatar_url);
       }
 
-      setState(prev => ({ ...prev, isLoading: false }));
+      setState((prev) => ({ ...prev, isLoading: false }));
     } catch (error) {
       console.error('プロフィール初期化エラー:', error);
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: "プロフィールの初期化に失敗しました" 
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: 'プロフィールの初期化に失敗しました',
       }));
       setShowErrorModal(true);
     }
   }
 
   async function createNewProfile(userId: string) {
-    const { error: createError } = await supabase
-      .from('profiles')
-      .insert({
-        id: userId,
-        name: '新しいユーザー',
-        avatar_url: '/user.webp',
-        updated_at: new Date().toISOString()
-      });
-    
+    const { error: createError } = await supabase.from('profiles').insert({
+      id: userId,
+      name: '新しいユーザー',
+      avatar_url: '/user.webp',
+      updated_at: new Date().toISOString(),
+    });
+
     if (createError) throw createError;
-    
+
     setName('新しいユーザー');
     setAvatarUrl('/user.webp');
   }
 
   const handleError = (errorMessage: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       error: errorMessage,
-      successMessage: null
+      successMessage: null,
     }));
     setShowErrorModal(true);
   };
 
   const handleSuccess = (message: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       successMessage: message,
       error: null,
-      isComplete: true
+      isComplete: true,
     }));
     setShowErrorModal(true);
-    
+
     // 成功メッセージを表示した後、少し遅延してからリダイレクト
     setTimeout(() => {
       router.push('/chats');
@@ -140,12 +140,12 @@ export default function ProfileEdit() {
         />
       </div>
       {showErrorModal && (
-        <ErrorModal 
-          message={state.error || state.successMessage || ""} 
+        <ErrorModal
+          message={state.error || state.successMessage || ''}
           showModal={setShowErrorModal}
           isError={!!state.error}
         />
       )}
     </div>
   );
-} 
+}

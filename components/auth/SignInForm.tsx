@@ -1,17 +1,18 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import FormField from "@/components/molecules/FormField/FormField";
-import Button from "@/components/atoms/Button/Button";
-import Link from "next/link";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import Button from '@/components/atoms/Button/Button';
+import FormField from '@/components/molecules/FormField/FormField';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { AuthError } from '@supabase/supabase-js';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function SignInForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,40 +20,40 @@ export default function SignInForm() {
 
   const validateForm = () => {
     if (!email) {
-      setError("メールアドレスを入力してください");
+      setError('メールアドレスを入力してください');
       return false;
     }
 
     if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      setError("有効なメールアドレスを入力してください");
+      setError('有効なメールアドレスを入力してください');
       return false;
     }
 
     if (!password) {
-      setError("パスワードを入力してください");
+      setError('パスワードを入力してください');
       return false;
     }
 
     return true;
   };
 
-  const getErrorMessage = (error: any) => {
+  const getErrorMessage = (error: AuthError) => {
     const errorMessage = error.message;
-    if (errorMessage.includes("Invalid login credentials")) {
-      return "メールアドレスまたはパスワードが正しくありません";
+    if (errorMessage.includes('Invalid login credentials')) {
+      return 'メールアドレスまたはパスワードが正しくありません';
     }
-    if (errorMessage.includes("Email not confirmed")) {
-      return "メールアドレスの確認が完了していません";
+    if (errorMessage.includes('Email not confirmed')) {
+      return 'メールアドレスの確認が完了していません';
     }
-    if (errorMessage.includes("Too many requests")) {
-      return "短時間に多くのリクエストが発生しました。しばらく時間をおいて再度お試しください";
+    if (errorMessage.includes('Too many requests')) {
+      return '短時間に多くのリクエストが発生しました。しばらく時間をおいて再度お試しください';
     }
-    return "エラーが発生しました。しばらく時間をおいて再度お試しください";
+    return 'ログイン中にエラーが発生しました';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
+    setError('');
     setIsLoading(true);
 
     if (!validateForm()) {
@@ -61,52 +62,49 @@ export default function SignInForm() {
     }
 
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
-      if (signInError) {
-        console.error("Sign in error:", signInError);
-        setError(getErrorMessage(signInError));
-        return;
+      if (error) throw error;
+      router.push('/profile');
+      router.refresh();
+    } catch (error) {
+      if (error instanceof AuthError) {
+        setError(getErrorMessage(error));
+      } else {
+        setError('予期せぬエラーが発生しました');
       }
-
-      if (data?.user) {
-        console.log("Sign in successful:", data.user);
-        router.push('/profile');
-        router.refresh();
-      }
-    } catch (error: any) {
-      console.error("Unexpected error:", error);
-      setError(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleProviderSignIn = async (provider: "google" | "github") => {
+  const handleOAuthLogin = async (provider: 'google' | 'github') => {
+    setError('');
+    setIsLoading(true);
+
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-      if (error) {
-        console.error("OAuth error:", error);
-        throw error;
+      if (error) throw error;
+    } catch (error) {
+      if (error instanceof AuthError) {
+        setError(getErrorMessage(error));
+      } else {
+        setError('予期せぬエラーが発生しました');
       }
-      console.log("OAuth data:", data);
-    } catch (error: any) {
-      console.error("OAuth unexpected error:", error);
-      setError(getErrorMessage(error));
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 animate-slide-up">
       <FormField
+        id="email"
         label="メールアドレス"
         type="email"
         value={email}
@@ -117,25 +115,23 @@ export default function SignInForm() {
       />
       <div className="relative">
         <FormField
+          id="password"
           label="パスワード"
-          type={showPassword ? "text" : "password"}
+          type={showPassword ? 'text' : 'password'}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           className="bg-gray-50 dark:bg-black/40 transition-all duration-200 focus:ring-2 focus:ring-send-button/20 text-gray-900 dark:text-gray-100 pr-10"
         />
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-3 top-[38px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
-          aria-label={showPassword ? "パスワードを隠す" : "パスワードを表示"}
+          aria-label={showPassword ? 'パスワードを隠す' : 'パスワードを表示'}
         >
-          {showPassword ? (
-            <EyeIcon className="h-5 w-5" />
-          ) : (
-            <EyeSlashIcon className="h-5 w-5" />
-          )}
-        </button>
+          {showPassword ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
+        </Button>
       </div>
       <div className="flex items-center justify-between">
         <Link
@@ -159,14 +155,16 @@ export default function SignInForm() {
             <div className="w-full border-t border-gray-300 dark:border-gray-700" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white dark:bg-black text-gray-500 dark:text-gray-400 text-xs">または</span>
+            <span className="px-2 bg-white dark:bg-black text-gray-500 dark:text-gray-400 text-xs">
+              または
+            </span>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Button
             type="button"
             variant="secondary"
-            onClick={() => handleProviderSignIn("google")}
+            onClick={() => handleOAuthLogin('google')}
             className="bg-white dark:bg-black/40 hover:bg-gray-50 dark:hover:bg-black/60 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 opacity-50 cursor-not-allowed transition-all duration-200 text-sm py-1.5"
             disabled
           >
@@ -175,7 +173,7 @@ export default function SignInForm() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => handleProviderSignIn("github")}
+            onClick={() => handleOAuthLogin('github')}
             className="bg-white dark:bg-black/40 hover:bg-gray-50 dark:hover:bg-black/60 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 opacity-50 cursor-not-allowed transition-all duration-200 text-sm py-1.5"
             disabled
           >
@@ -185,4 +183,4 @@ export default function SignInForm() {
       </div>
     </form>
   );
-} 
+}
