@@ -56,19 +56,3 @@
    ```bash
    npm run dev
    ```
-
-## ビルドとデプロイ
-
-- 本番ビルド:
-  ```bash
-  npm run build
-  ```
-
-- 本番サーバーの起動:
-  ```bash
-  npm run start
-  ```
-
-## ライセンス
-
-MIT
