@@ -1,4 +1,5 @@
 'use client';
+import Button from '@/components/atoms/Button/Button';
 import ChatUI from '@/components/chats/chat';
 import Loading from '@/components/loading';
 import MessagePopup from '@/components/molecules/MessagePopup';
@@ -237,7 +238,7 @@ export default function Chats() {
     };
 
     resetAndFetchMessages();
-  }, [channelName]);
+  }, [channelName, addMessageIfNotExists, supabase]);
 
   // プロフィール情報の取得
   useEffect(() => {
@@ -259,7 +260,7 @@ export default function Chats() {
     };
 
     fetchProfiles();
-  }, []);
+  }, [supabase]);
 
   // 初期描画後の自動スクロール
   useEffect(() => {
@@ -312,7 +313,6 @@ export default function Chats() {
 
           setMessages((prev) => {
             const newMessages = [...prev, newMessage];
-            // 重複を除去
             return Array.from(new Map(newMessages.map((msg) => [msg.id, msg])).values());
           });
 
@@ -344,7 +344,7 @@ export default function Chats() {
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [channelName, addMessageIfNotExists, isNearBottom]);
+  }, [channelName, addMessageIfNotExists, isNearBottom, supabase]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -462,7 +462,8 @@ export default function Chats() {
                 </div>
               )}
               {showNewMessageAlert && (
-                <div
+                <Button
+                  type="button"
                   className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-chat-bg dark:bg-black/40 text-gray-700 dark:text-global-bg px-4 py-2 rounded-full cursor-pointer shadow-lg hover:bg-chat-bg/80 dark:hover:bg-black/60 transition-colors"
                   onClick={() => {
                     setShowNewMessageAlert(false);
@@ -477,7 +478,7 @@ export default function Chats() {
                   }}
                 >
                   新しいメッセージがあります
-                </div>
+                </Button>
               )}
               <div className="space-y-4">
                 {messages.map((message, index) => (
@@ -503,23 +504,25 @@ export default function Chats() {
         </div>
         {user ? (
           <form className="p-2 border-t bg-chat-bg dark:bg-black/40" onSubmit={onSubmitNewMessage}>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <textarea
-                  className="w-full p-2 border rounded-lg resize-none bg-input-bg dark:bg-black/40 text-gray-900 dark:text-global-bg placeholder-gray-500 dark:placeholder-gray-400"
-                  rows={2}
-                  placeholder="メッセージを入力..."
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                />
-              </div>
-              <button
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="メッセージを入力..."
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-send-button/20 transition-all duration-200"
+                disabled={isLoading}
+              />
+              <Button
                 type="submit"
-                disabled={inputText === ''}
-                className="px-3 py-1.5 bg-send-button text-gray-700 dark:text-global-bg rounded-lg disabled:opacity-50 text-sm hover:bg-send-button/80 transition-colors"
+                variant="primary"
+                disabled={isLoading || !inputText.trim()}
+                className={`px-4 py-2 rounded-lg bg-send-button text-white font-medium transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
+                  (isLoading || !inputText.trim()) && 'opacity-50 cursor-not-allowed'
+                }`}
               >
                 送信
-              </button>
+              </Button>
             </div>
           </form>
         ) : (

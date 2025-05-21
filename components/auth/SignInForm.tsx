@@ -124,14 +124,15 @@ export default function SignInForm() {
           required
           className="bg-gray-50 dark:bg-black/40 transition-all duration-200 focus:ring-2 focus:ring-send-button/20 text-gray-900 dark:text-gray-100 pr-10"
         />
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-3 top-[38px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
           aria-label={showPassword ? 'パスワードを隠す' : 'パスワードを表示'}
         >
           {showPassword ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
-        </button>
+        </Button>
       </div>
       <div className="flex items-center justify-between">
         <Link

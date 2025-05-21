@@ -1,5 +1,7 @@
 'use client';
+
 import PageTransition from '@/components/PageTransition';
+import Button from '@/components/atoms/Button/Button';
 import Loading from '@/components/loading';
 import type { Database } from '@/types/supabasetype';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -50,12 +52,13 @@ export default function Home() {
         </div>
         <div className="text-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <h1 className="text-2xl font-bold mb-4 text-black dark:text-global-bg">ようこそ!</h1>
-          <button
+          <Button
+            variant="primary"
             onClick={() => router.push('/chats')}
             className="px-6 py-2 bg-send-button text-black dark:text-global-bg rounded-lg hover:bg-send-button/80 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
           >
             話そう!おだやかに
-          </button>
+          </Button>
         </div>
       </div>
     </PageTransition>

@@ -7,6 +7,7 @@ import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Button from './atoms/Button/Button';
 
 interface NavigationProps {
   session: Session | null;
@@ -72,7 +73,7 @@ export default function Navigation({ session }: NavigationProps) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase]);
 
   const handleSignOut = async () => {
     try {
@@ -107,7 +108,8 @@ export default function Navigation({ session }: NavigationProps) {
                 MeerChat
               </Link>
               {mounted && (
-                <button
+                <Button
+                  variant="secondary"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   className="p-1.5 rounded-lg hover:bg-global-bg dark:hover:bg-black/20 transition-colors"
                   aria-label="Toggle theme"
@@ -117,7 +119,7 @@ export default function Navigation({ session }: NavigationProps) {
                   ) : (
                     <Moon className="h-4 w-4 text-black" />
                   )}
-                </button>
+                </Button>
               )}
             </div>
 
@@ -186,17 +188,19 @@ export default function Navigation({ session }: NavigationProps) {
                     }}
                   />
                 </Link>
-                <button
+                <Button
+                  variant="secondary"
                   onClick={() => setIsLogoutModalOpen(true)}
                   className="ml-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 text-sm font-medium hover:text-send-button transition-colors duration-200"
                 >
                   サインアウト
-                </button>
+                </Button>
               </div>
             )}
 
             <div className="flex items-center sm:hidden">
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-black/20 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
               >
@@ -207,7 +211,9 @@ export default function Navigation({ session }: NavigationProps) {
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden="true"
                 >
+                  <title>メニューを開く</title>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -221,7 +227,9 @@ export default function Navigation({ session }: NavigationProps) {
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden="true"
                 >
+                  <title>メニューを閉じる</title>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -229,7 +237,7 @@ export default function Navigation({ session }: NavigationProps) {
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -269,12 +277,13 @@ export default function Navigation({ session }: NavigationProps) {
                 >
                   プロフィール
                 </Link>
-                <button
+                <Button
+                  variant="secondary"
                   onClick={() => setIsLogoutModalOpen(true)}
                   className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-black/20 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                   サインアウト
-                </button>
+                </Button>
               </>
             ) : (
               <>
@@ -315,18 +324,20 @@ export default function Navigation({ session }: NavigationProps) {
               ログアウトしてもよろしいですか？
             </p>
             <div className="flex justify-end space-x-3">
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setIsLogoutModalOpen(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-black/20 hover:bg-gray-200 dark:hover:bg-black/40 rounded-md"
               >
                 キャンセル
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
                 onClick={handleSignOut}
                 className="px-4 py-2 text-sm font-medium text-white bg-send-button hover:bg-send-button/80 rounded-md"
               >
                 サインアウト
-              </button>
+              </Button>
             </div>
           </div>
         </div>

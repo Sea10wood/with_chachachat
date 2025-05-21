@@ -1,4 +1,5 @@
 'use client';
+import Button from '@/components/atoms/Button/Button';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { AuthError } from '@supabase/supabase-js';
 import { useState } from 'react';
@@ -78,12 +79,13 @@ const InputPasswordForReset = () => {
           />
         </div>
         <div className="text-center mt-5">
-          <button
-            className="text-black bg-send-button hover:bg-loading-color focus:ring-4 focus:outline-none focus:ring-send-button/50 font-medium rounded-lg text-sm px-10 py-2.5 text-center transition-colors duration-200"
+          <Button
             type="submit"
+            variant="primary"
+            className="text-black bg-send-button hover:bg-loading-color focus:ring-4 focus:outline-none focus:ring-send-button/50 font-medium rounded-lg text-sm px-10 py-2.5 text-center transition-colors duration-200"
           >
             送信
-          </button>
+          </Button>
         </div>
       </form>
     </div>

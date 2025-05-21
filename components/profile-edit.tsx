@@ -4,6 +4,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Button from './atoms/Button/Button';
 import ErrorModal from './modal/errorModal';
 
 export default function ProfileEdit() {
@@ -221,12 +222,13 @@ export default function ProfileEdit() {
               required
             />
           </div>
-          <button
+          <Button
             type="submit"
+            variant="primary"
             className="w-full bg-send-button text-black dark:text-global-bg py-2 rounded-lg hover:bg-send-button/80 transition-colors"
           >
             保存
-          </button>
+          </Button>
         </form>
       </div>
       {showErrorModal && (
