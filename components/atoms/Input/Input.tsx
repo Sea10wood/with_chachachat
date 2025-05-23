@@ -7,8 +7,6 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string | null;
   helperText?: string;
   id?: string;
-  showPassword?: boolean;
-  togglePasswordVisibility?: () => void;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
