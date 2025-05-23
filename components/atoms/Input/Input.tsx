@@ -1,6 +1,6 @@
 'use client';
 
-import { type InputHTMLAttributes, forwardRef } from 'react';
+import { type InputHTMLAttributes, forwardRef, useState } from 'react';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -19,12 +19,18 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       helperText,
       className = '',
       id,
-      showPassword,
-      togglePasswordVisibility,
+      showPassword: controlledShowPassword,
+      togglePasswordVisibility: controlledTogglePassword,
       ...props
     },
     ref
   ) => {
+    const [internalShowPassword, setInternalShowPassword] = useState(false);
+    const showPassword = controlledShowPassword ?? internalShowPassword;
+    const togglePasswordVisibility =
+      controlledTogglePassword ??
+      (() => setInternalShowPassword(!internalShowPassword));
+
     const baseStyles =
       'w-full px-3 py-2 bg-input-bg border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-send-button';
     const borderStyles = error
@@ -42,7 +48,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             id={id}
             ref={ref}
-            className={`${baseStyles} ${borderStyles} ${className} ${props.type === 'password' ? 'pr-10' : ''}`}
+            type={
+              props.type === 'password' && showPassword ? 'text' : props.type
+            }
+            className={`${baseStyles} ${borderStyles} ${className}`}
             {...props}
           />
           {props.type === 'password' && (

@@ -8,30 +8,37 @@ import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  fallback: ['system-ui', 'arial'],
+  preload: false,
+});
 
 export const metadata: Metadata = {
-  title: 'MeerChat',
+  title: 'MeerChat - みーあちゃっと',
   description: 'おだやかな会話を楽しむチャットアプリ',
-  icons: {
-    icon: [
+  openGraph: {
+    title: 'MeerChat - みーあちゃっと',
+    description: 'おだやかな会話を楽しむチャットアプリ',
+    url: 'https://mienaisekkeizu.com/',
+    siteName: 'MeerChat',
+    images: [
       {
-        url: '/favicon.ico',
-        sizes: 'any',
-      },
-      {
-        url: '/icon.png',
-        type: 'image/png',
-        sizes: '32x32',
-      },
-    ],
-    apple: [
-      {
-        url: '/apple-icon.png',
-        sizes: '180x180',
-        type: 'image/png',
+        url: '/ogp.png',
+        width: 1200,
+        height: 630,
+        alt: 'MeerChat',
       },
     ],
+    locale: 'ja_JP',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MeerChat - みーあちゃっと',
+    description: 'おだやかな会話を楽しむチャットアプリ',
+    images: ['/ogp.png'],
   },
 };
 
@@ -48,7 +55,7 @@ export default async function RootLayout({
   return (
     <html lang="ja" suppressHydrationWarning>
       <body
-        className={`${inter.className} min-h-screen bg-global-bg dark:bg-black`}
+        className={`${inter.className} min-h-screen bg-global-bg dark:bg-black text-gray-900 dark:text-gray-100`}
         suppressHydrationWarning
       >
         <ThemeProvider>

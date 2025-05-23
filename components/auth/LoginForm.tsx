@@ -120,7 +120,7 @@ export default function SignInForm() {
       />
       <div className="flex items-center justify-between">
         <Link
-          href="/auth/reset-password"
+          href="/resetPassword"
           className="text-sm text-send-button hover:text-loading-color"
         >
           パスワードを忘れた場合

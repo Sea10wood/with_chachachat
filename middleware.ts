@@ -44,7 +44,6 @@ export const config = {
   matcher: [
     '/profile/:path*',
     '/settings/:path*',
-    '/chats/:path*',
     '/auth/:path*',
     '/auth/signin',
   ],

@@ -37,6 +37,7 @@
 - サーバーサイドレンダリング（SSR）対応
 - ミドルウェアによる認証保護
 - モダンなUI（Tailwind CSS）
+- メモリベースのレート制限（1分間に10リクエストまで）
 
 ## 開発環境のセットアップ
 
@@ -50,25 +51,10 @@
    ```
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   OPENAI_API_KEY=your_openai_api_key
    ```
 
 3. 開発サーバーの起動:
    ```bash
    npm run dev
    ```
-
-## ビルドとデプロイ
-
-- 本番ビルド:
-  ```bash
-  npm run build
-  ```
-
-- 本番サーバーの起動:
-  ```bash
-  npm run start
-  ```
-
-## ライセンス
-
-MIT

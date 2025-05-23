@@ -68,13 +68,11 @@ export default function SignInForm() {
       });
       if (error) throw error;
       router.push('/profile');
-      router.refresh();
     } catch (error) {
-      if (error instanceof AuthError) {
-        setError(getErrorMessage(error));
-      } else {
-        setError('予期せぬエラーが発生しました');
-      }
+      setError(
+        '認証に失敗しました。メールアドレスとパスワードを確認してください。'
+      );
+      console.error('認証エラー:', error);
     } finally {
       setIsLoading(false);
     }
@@ -127,7 +125,7 @@ export default function SignInForm() {
           type="button"
           variant="secondary"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-[38px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
+          className="absolute right-1 top-[70%] -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
           aria-label={showPassword ? 'パスワードを隠す' : 'パスワードを表示'}
         >
           {showPassword ? (
@@ -139,7 +137,7 @@ export default function SignInForm() {
       </div>
       <div className="flex items-center justify-between">
         <Link
-          href="/auth/reset-password"
+          href="/resetPassword"
           className="text-sm text-send-button hover:text-loading-color transition-colors duration-200"
         >
           パスワードを忘れた場合

@@ -13,7 +13,9 @@ interface NavigationProps {
   session: Session | null;
 }
 
-export default function Navigation({ session }: NavigationProps) {
+export default function Navigation({
+  session: initialSession,
+}: NavigationProps) {
   const supabase = createClientComponentClient();
   const pathname = usePathname();
   const router = useRouter();
@@ -22,38 +24,20 @@ export default function Navigation({ session }: NavigationProps) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [session, setSession] = useState<Session | null>(initialSession);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('avatar_url')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profile?.avatar_url) {
-          const {
-            data: { publicUrl },
-          } = supabase.storage.from('avatars').getPublicUrl(profile.avatar_url);
-          setAvatarUrl(publicUrl);
-        } else {
-          setAvatarUrl('/user.webp');
-        }
-      }
-    };
-    getSession();
+    // 初期セッションを設定
+    setSession(initialSession);
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -69,17 +53,20 @@ export default function Navigation({ session }: NavigationProps) {
         } else {
           setAvatarUrl('/user.webp');
         }
+      } else {
+        setAvatarUrl(null);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase]);
+  }, [supabase, initialSession]);
 
   const handleSignOut = async () => {
     try {
       setIsLogoutModalOpen(false);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      setSession(null);
       router.push('/auth/signin');
       router.refresh();
     } catch (error) {
@@ -258,18 +245,18 @@ export default function Navigation({ session }: NavigationProps) {
             >
               ホーム
             </Link>
+            <Link
+              href="/chats?channel_name=thread1"
+              className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
+                isActive('/chats')
+                  ? 'bg-send-button/10 border-send-button text-gray-900 dark:text-global-bg font-semibold'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-black/20 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              チャット
+            </Link>
             {session ? (
               <>
-                <Link
-                  href="/chats?channel_name=thread1"
-                  className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
-                    isActive('/chats')
-                      ? 'bg-send-button/10 border-send-button text-gray-900 dark:text-global-bg font-semibold'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-black/20 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
-                >
-                  チャット
-                </Link>
                 <Link
                   href="/profile"
                   className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
