@@ -111,30 +111,15 @@ export default function SignInForm() {
         error={error}
         className="bg-gray-50 dark:bg-black/40 transition-all duration-200 focus:ring-2 focus:ring-send-button/20 text-gray-900 dark:text-gray-100"
       />
-      <div className="relative">
-        <FormField
-          id="password"
-          label="パスワード"
-          type={showPassword ? 'text' : 'password'}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="bg-gray-50 dark:bg-black/40 transition-all duration-200 focus:ring-2 focus:ring-send-button/20 text-gray-900 dark:text-gray-100 pr-10"
-        />
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-1 top-[70%] -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
-          aria-label={showPassword ? 'パスワードを隠す' : 'パスワードを表示'}
-        >
-          {showPassword ? (
-            <EyeIcon className="h-5 w-5" />
-          ) : (
-            <EyeSlashIcon className="h-5 w-5" />
-          )}
-        </Button>
-      </div>
+      <FormField
+        id="password"
+        label="パスワード"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        className="bg-gray-50 dark:bg-black/40 transition-all duration-200 focus:ring-2 focus:ring-send-button/20 text-gray-900 dark:text-gray-100"
+      />
       <div className="flex items-center justify-between">
         <Link
           href="/resetPassword"
