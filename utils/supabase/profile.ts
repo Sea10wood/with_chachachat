@@ -37,7 +37,10 @@ export async function createProfile(userId: string) {
 
 export async function updateProfile(userId: string, data: ProfileUpdateData) {
   const supabase = createClientComponentClient();
-  const { error } = await supabase.from('profiles').update(data).eq('id', userId);
+  const { error } = await supabase
+    .from('profiles')
+    .update(data)
+    .eq('id', userId);
 
   if (error) throw error;
 }
@@ -52,10 +55,12 @@ export async function uploadAvatar(file: File) {
   const fileExt = file.name.split('.').pop();
   const filePath = `${user.id}-${Math.random()}.${fileExt}`;
 
-  const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, {
-    cacheControl: '3600',
-    upsert: false,
-  });
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false,
+    });
 
   if (uploadError) throw uploadError;
 

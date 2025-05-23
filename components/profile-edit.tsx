@@ -40,12 +40,14 @@ export default function ProfileEdit() {
       if (error) {
         if (error.code === 'PGRST116') {
           // プロフィールが存在しない場合は作成
-          const { error: createError } = await supabase.from('profiles').insert({
-            id: user.id,
-            name: '新しいユーザー',
-            avatar_url: '/user.webp',
-            updated_at: new Date().toISOString(),
-          });
+          const { error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              name: '新しいユーザー',
+              avatar_url: '/user.webp',
+              updated_at: new Date().toISOString(),
+            });
 
           if (createError) throw createError;
 
@@ -124,10 +126,12 @@ export default function ProfileEdit() {
 
       const filePath = `${user.id}-${Math.random()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false,
-      });
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
 
       if (uploadError) throw uploadError;
 
@@ -169,7 +173,9 @@ export default function ProfileEdit() {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-xl font-bold mb-4 text-black dark:text-global-bg">プロフィール編集</h1>
+      <h1 className="text-xl font-bold mb-4 text-black dark:text-global-bg">
+        プロフィール編集
+      </h1>
       <div className="bg-chat-bg dark:bg-black/20 rounded-lg shadow p-6">
         <div className="flex flex-col items-center mb-8">
           <div className="relative w-48 h-48 mb-4">
@@ -199,7 +205,9 @@ export default function ProfileEdit() {
               />
             </label>
             {isLoading && (
-              <p className="text-sm text-black/70 dark:text-global-bg/70">アップロード中...</p>
+              <p className="text-sm text-black/70 dark:text-global-bg/70">
+                アップロード中...
+              </p>
             )}
           </div>
         </div>

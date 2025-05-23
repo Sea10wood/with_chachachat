@@ -12,7 +12,12 @@ interface ProfileFormProps {
   onSuccess: (message: string) => void;
 }
 
-export default function ProfileForm({ name, onNameChange, onError, onSuccess }: ProfileFormProps) {
+export default function ProfileForm({
+  name,
+  onNameChange,
+  onError,
+  onSuccess,
+}: ProfileFormProps) {
   const [formState, setFormState] = useState<FormState>({
     isSubmitting: false,
     isComplete: false,

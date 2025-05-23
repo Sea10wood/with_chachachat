@@ -45,7 +45,10 @@ export async function POST(request: Request) {
     const { message, channel } = await request.json();
 
     if (!message || !channel) {
-      return NextResponse.json({ error: 'メッセージとチャンネルは必須です' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'メッセージとチャンネルは必須です' },
+        { status: 400 }
+      );
     }
 
     // ユーザーのメッセージを保存
@@ -63,7 +66,10 @@ export async function POST(request: Request) {
 
     if (insertError) {
       console.error('メッセージの保存エラー:', insertError);
-      return NextResponse.json({ error: 'メッセージの保存に失敗しました' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'メッセージの保存に失敗しました' },
+        { status: 500 }
+      );
     }
 
     // メッセージに@meerchatが含まれている場合のみAIが応答
@@ -86,7 +92,8 @@ export async function POST(request: Request) {
         });
 
         const aiResponse =
-          completion.choices[0]?.message?.content || 'すみません、回答を生成できませんでした。';
+          completion.choices[0]?.message?.content ||
+          'すみません、回答を生成できませんでした。';
 
         // AIの応答を保存
         const { data: aiMessage, error: aiError } = await supabase
@@ -104,7 +111,10 @@ export async function POST(request: Request) {
 
         if (aiError) {
           console.error('AI response save error:', aiError);
-          return NextResponse.json({ error: 'AIの応答の保存に失敗しました' }, { status: 500 });
+          return NextResponse.json(
+            { error: 'AIの応答の保存に失敗しました' },
+            { status: 500 }
+          );
         }
 
         return NextResponse.json(
@@ -117,7 +127,10 @@ export async function POST(request: Request) {
         );
       } catch (openaiError) {
         console.error('OpenAI API error:', openaiError);
-        return NextResponse.json({ error: 'AIの応答生成に失敗しました' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'AIの応答生成に失敗しました' },
+          { status: 500 }
+        );
       }
     }
 
@@ -127,6 +140,9 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error('予期せぬエラー:', error);
-    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'サーバーエラーが発生しました' },
+      { status: 500 }
+    );
   }
 }

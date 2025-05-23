@@ -138,7 +138,11 @@ export default function SignUpForm() {
           className="absolute right-3 top-[38px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
           aria-label={showPassword ? 'パスワードを隠す' : 'パスワードを表示'}
         >
-          {showPassword ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
+          {showPassword ? (
+            <EyeIcon className="h-5 w-5" />
+          ) : (
+            <EyeSlashIcon className="h-5 w-5" />
+          )}
         </Button>
       </div>
       <div className="relative">
@@ -156,7 +160,9 @@ export default function SignUpForm() {
           variant="secondary"
           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
           className="absolute right-3 top-[38px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
-          aria-label={showConfirmPassword ? 'パスワードを隠す' : 'パスワードを表示'}
+          aria-label={
+            showConfirmPassword ? 'パスワードを隠す' : 'パスワードを表示'
+          }
         >
           {showConfirmPassword ? (
             <EyeIcon className="h-5 w-5" />

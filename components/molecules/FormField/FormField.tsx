@@ -14,10 +14,16 @@ export interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
-  ({ label, error, helperText, required, className = '', id, ...props }, ref) => {
+  (
+    { label, error, helperText, required, className = '', id, ...props },
+    ref
+  ) => {
     return (
       <div className="space-y-1">
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label
+          htmlFor={id}
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>

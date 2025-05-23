@@ -50,7 +50,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               type="button"
               onClick={togglePasswordVisibility}
               className="absolute inset-y-0 right-0 flex items-center pr-3"
-              aria-label={showPassword ? 'パスワードを隠す' : 'パスワードを表示'}
+              aria-label={
+                showPassword ? 'パスワードを隠す' : 'パスワードを表示'
+              }
             >
               {showPassword ? (
                 <svg
@@ -98,7 +100,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && <p className="text-red-500 text-sm">{error}</p>}
-        {helperText && !error && <p className="text-gray-500 text-sm">{helperText}</p>}
+        {helperText && !error && (
+          <p className="text-gray-500 text-sm">{helperText}</p>
+        )}
       </div>
     );
   }

@@ -7,7 +7,11 @@ interface ErrorModalProps {
   isError?: boolean;
 }
 
-export default function ErrorModal({ message, showModal, isError = true }: ErrorModalProps) {
+export default function ErrorModal({
+  message,
+  showModal,
+  isError = true,
+}: ErrorModalProps) {
   const handleClose = () => {
     showModal(false);
   };

@@ -126,7 +126,12 @@ export default function SignInForm() {
           パスワードを忘れた場合
         </Link>
       </div>
-      <Button type="submit" variant="primary" className="w-full" isLoading={isLoading}>
+      <Button
+        type="submit"
+        variant="primary"
+        className="w-full"
+        isLoading={isLoading}
+      >
         サインイン
       </Button>
       <div className="mt-4">
@@ -139,10 +144,18 @@ export default function SignInForm() {
           </div>
         </div>
         <div className="mt-6 grid grid-cols-2 gap-3">
-          <Button type="button" variant="secondary" onClick={() => handleOAuthLogin('google')}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => handleOAuthLogin('google')}
+          >
             Googleでサインイン
           </Button>
-          <Button type="button" variant="secondary" onClick={() => handleOAuthLogin('github')}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => handleOAuthLogin('github')}
+          >
             GitHubでサインイン
           </Button>
         </div>

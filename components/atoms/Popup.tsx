@@ -8,7 +8,12 @@ interface PopupProps {
   type?: 'info' | 'warning' | 'error';
 }
 
-const Popup: React.FC<PopupProps> = ({ isOpen, onClose, children, type = 'info' }) => {
+const Popup: React.FC<PopupProps> = ({
+  isOpen,
+  onClose,
+  children,
+  type = 'info',
+}) => {
   if (!isOpen) return null;
 
   const bgColor = {
@@ -31,6 +36,7 @@ const Popup: React.FC<PopupProps> = ({ isOpen, onClose, children, type = 'info' 
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
         role="button"
         tabIndex={0}
+        data-testid="popup-backdrop"
       />
       <div
         className={`relative p-6 rounded-lg shadow-lg ${bgColor} ${textColor} max-w-sm w-full mx-4 transform transition-all duration-200 ease-out`}
