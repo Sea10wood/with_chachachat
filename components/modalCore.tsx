@@ -9,7 +9,10 @@ const ModalCore = ({ modalType }: Props) => {
   const href = modalType === 'signin' ? '/auth/login' : '/auth/signup';
 
   return (
-    <Link href={href} className="text-black hover:text-send-button transition-colors duration-200">
+    <Link
+      href={href}
+      className="text-black hover:text-send-button transition-colors duration-200"
+    >
       {title}
     </Link>
   );

@@ -49,7 +49,10 @@ const InputPasswordForReset = () => {
       <p className="text-black mb-4">新しいパスワードを入力してください</p>
       <form className="pt-10 text-left" onSubmit={onSubmit}>
         <div>
-          <label htmlFor="password" className="block mb-2 text-sm font-medium text-black">
+          <label
+            htmlFor="password"
+            className="block mb-2 text-sm font-medium text-black"
+          >
             パスワード
           </label>
           <input
@@ -64,7 +67,10 @@ const InputPasswordForReset = () => {
           />
         </div>
         <div className="pt-5">
-          <label htmlFor="passwordConf" className="block mb-2 text-sm font-medium text-black">
+          <label
+            htmlFor="passwordConf"
+            className="block mb-2 text-sm font-medium text-black"
+          >
             パスワード（確認）
           </label>
           <input

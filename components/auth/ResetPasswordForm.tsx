@@ -41,7 +41,10 @@ export default function ResetPasswordForm() {
           <br />
           メールに記載されたリンクからパスワードを再設定してください。
         </p>
-        <Link href="/auth/signin" className="text-send-button hover:text-loading-color">
+        <Link
+          href="/auth/signin"
+          className="text-send-button hover:text-loading-color"
+        >
           サインインページに戻る
         </Link>
       </div>
@@ -69,7 +72,10 @@ export default function ResetPasswordForm() {
         リセットメールを送信
       </Button>
       <div className="text-sm text-center text-gray-600">
-        <Link href="/auth/signin" className="text-send-button hover:text-loading-color">
+        <Link
+          href="/auth/signin"
+          className="text-send-button hover:text-loading-color"
+        >
           サインインページに戻る
         </Link>
       </div>

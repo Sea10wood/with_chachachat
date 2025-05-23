@@ -1,4 +1,7 @@
-export function validateName(name: string): { isValid: boolean; error: string | null } {
+export function validateName(name: string): {
+  isValid: boolean;
+  error: string | null;
+} {
   if (!name.trim()) {
     return {
       isValid: false,
@@ -19,7 +22,10 @@ export function validateName(name: string): { isValid: boolean; error: string | 
   };
 }
 
-export function validateAvatarFile(file: File): { isValid: boolean; error: string | null } {
+export function validateAvatarFile(file: File): {
+  isValid: boolean;
+  error: string | null;
+} {
   if (!file) {
     return {
       isValid: false,

@@ -3,7 +3,7 @@ import Navigation from '@/components/navigation';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import type { Database } from '@/types/supabasetype';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -18,6 +18,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'MeerChat - みーあちゃっと',
   description: 'おだやかな会話を楽しむチャットアプリ',
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  ),
   openGraph: {
     title: 'MeerChat - みーあちゃっと',
     description: 'おだやかな会話を楽しむチャットアプリ',
@@ -25,10 +28,10 @@ export const metadata: Metadata = {
     siteName: 'MeerChat',
     images: [
       {
-        url: '/ogp.png',
+        url: '/ogp-optimized.png',
         width: 1200,
         height: 630,
-        alt: 'MeerChat',
+        alt: 'MeerChat - 快適なチャット体験を提供するコミュニケーションプラットフォーム',
       },
     ],
     locale: 'ja_JP',
@@ -38,8 +41,20 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'MeerChat - みーあちゃっと',
     description: 'おだやかな会話を楽しむチャットアプリ',
-    images: ['/ogp.png'],
+    images: ['/ogp-optimized.png'],
+    creator: '@mienaisekkeizu',
   },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default async function RootLayout({
@@ -54,6 +69,12 @@ export default async function RootLayout({
 
   return (
     <html lang="ja" suppressHydrationWarning>
+      <head>
+        <meta
+          name="viewport"
+          content={`${viewport.width}; initial-scale=${viewport.initialScale}; maximum-scale=${viewport.maximumScale}; user-scalable=${viewport.userScalable}`}
+        />
+      </head>
       <body
         className={`${inter.className} min-h-screen bg-global-bg dark:bg-black text-gray-900 dark:text-gray-100`}
         suppressHydrationWarning

@@ -101,7 +101,10 @@ export default function ChatUI() {
         )}
       </div>
       <div className="border-t border-gray-200 p-4 bg-white">
-        <form onSubmit={handleSubmit} className="flex space-x-4 animate-slide-up">
+        <form
+          onSubmit={handleSubmit}
+          className="flex space-x-4 animate-slide-up"
+        >
           <input
             type="text"
             value={input}

@@ -22,8 +22,10 @@ export default function Button({
     'rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
 
   const variantStyles = {
-    primary: 'bg-send-button text-black hover:bg-loading-color focus:ring-send-button',
-    secondary: 'bg-transparent text-gray-800 hover:bg-red-100 focus:ring-red-200',
+    primary:
+      'bg-send-button text-black hover:bg-loading-color focus:ring-send-button',
+    secondary:
+      'bg-transparent text-gray-800 hover:bg-red-100 focus:ring-red-200',
     danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500',
   };
 
@@ -33,7 +35,8 @@ export default function Button({
     large: 'px-6 py-3 text-lg',
   };
 
-  const stateStyles = isLoading || disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
+  const stateStyles =
+    isLoading || disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
 
   return (
     <button
@@ -42,7 +45,10 @@ export default function Button({
       {...props}
     >
       {isLoading ? (
-        <output className="flex items-center justify-center gap-2" aria-live="polite">
+        <output
+          className="flex items-center justify-center gap-2"
+          aria-live="polite"
+        >
           <svg
             className="animate-spin h-4 w-4"
             xmlns="http://www.w3.org/2000/svg"

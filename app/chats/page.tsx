@@ -28,12 +28,18 @@ export default function Chats() {
   const [inputText, setInputText] = useState('');
   const [userID, setUserID] = useState('');
   const [user, setUser] = useState<User | null>(null);
-  const [messages, setMessages] = useState<Database['public']['Tables']['Chats']['Row'][]>([]);
-  const [_profiles, setProfiles] = useState<Database['public']['Tables']['profiles']['Row'][]>([]);
+  const [messages, setMessages] = useState<
+    Database['public']['Tables']['Chats']['Row'][]
+  >([]);
+  const [_profiles, setProfiles] = useState<
+    Database['public']['Tables']['profiles']['Row'][]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPrev, setIsLoadingPrev] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [oldestMessageDate, setOldestMessageDate] = useState<string | null>(null);
+  const [oldestMessageDate, setOldestMessageDate] = useState<string | null>(
+    null
+  );
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [showNewMessageAlert, setShowNewMessageAlert] = useState(false);
   const [_error, setError] = useState<string | null>(null);
@@ -88,7 +94,8 @@ export default function Chats() {
 
       const isNearTop = element.scrollTop < SCROLL_THRESHOLD;
       const isBottom =
-        element.scrollHeight - element.scrollTop - element.clientHeight < BOTTOM_THRESHOLD;
+        element.scrollHeight - element.scrollTop - element.clientHeight <
+        BOTTOM_THRESHOLD;
 
       setIsNearBottom(isBottom);
 
@@ -127,14 +134,17 @@ export default function Chats() {
 
         // 時系列順にソート（古い順）
         const sortedMessages = uniqueMessages.sort(
-          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
 
         // 既存のメッセージと新しいメッセージを結合
         setMessages((prev) => {
           const newMessages = [...sortedMessages, ...prev];
           // 重複を除去
-          return Array.from(new Map(newMessages.map((msg) => [msg.id, msg])).values());
+          return Array.from(
+            new Map(newMessages.map((msg) => [msg.id, msg])).values()
+          );
         });
 
         // 最も古いメッセージの日時を更新
@@ -220,11 +230,15 @@ export default function Chats() {
           setError('メッセージの取得に失敗しました');
         } else if (messages) {
           // 重複チェックとIDの記録
-          const uniqueMessages = messages.filter((msg) => addMessageIfNotExists(msg));
+          const uniqueMessages = messages.filter((msg) =>
+            addMessageIfNotExists(msg)
+          );
 
           // 時系列順にソート（古い順）
           const sortedMessages = uniqueMessages.sort(
-            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            (a, b) =>
+              new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime()
           );
 
           setMessages(sortedMessages);
@@ -252,7 +266,10 @@ export default function Chats() {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const { data: profiles, error } = await supabase.from('profiles').select('*').order('name');
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('name');
 
         if (error) {
           console.error('プロフィール取得エラー:', error);
@@ -316,12 +333,15 @@ export default function Chats() {
         (payload: { new: Database['public']['Tables']['Chats']['Row'] }) => {
           if (!mounted) return;
 
-          const newMessage = payload.new as Database['public']['Tables']['Chats']['Row'];
+          const newMessage =
+            payload.new as Database['public']['Tables']['Chats']['Row'];
           if (!addMessageIfNotExists(newMessage)) return;
 
           setMessages((prev) => {
             const newMessages = [...prev, newMessage];
-            return Array.from(new Map(newMessages.map((msg) => [msg.id, msg])).values());
+            return Array.from(
+              new Map(newMessages.map((msg) => [msg.id, msg])).values()
+            );
           });
 
           if (isNearBottom && messagesContainerRef.current) {
@@ -369,7 +389,9 @@ export default function Chats() {
     type: 'info' | 'warning' | 'error' = 'info'
   ) => {
     const sanitizedMessage =
-      type === 'error' ? 'エラーが発生しました。しばらく時間をおいて再度お試しください。' : message;
+      type === 'error'
+        ? 'エラーが発生しました。しばらく時間をおいて再度お試しください。'
+        : message;
 
     setPopupState({
       isOpen: true,
@@ -400,7 +422,9 @@ export default function Chats() {
     );
   }
 
-  const onSubmitNewMessage = async (event: React.FormEvent<HTMLFormElement>) => {
+  const onSubmitNewMessage = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
     if (inputText === '' || !userID) return;
 
@@ -431,7 +455,11 @@ export default function Chats() {
       }
 
       if (!profile) {
-        showPopup('プロフィール設定が必要です', '投稿前にユーザ名を設定してください。', 'warning');
+        showPopup(
+          'プロフィール設定が必要です',
+          '投稿前にユーザ名を設定してください。',
+          'warning'
+        );
         return;
       }
 
@@ -454,7 +482,11 @@ export default function Chats() {
       setInputText('');
     } catch (error) {
       console.error('エラー:', error);
-      showPopup('エラーが発生しました', 'メッセージの送信に失敗しました。', 'error');
+      showPopup(
+        'エラーが発生しました',
+        'メッセージの送信に失敗しました。',
+        'error'
+      );
     }
   };
 
@@ -519,7 +551,11 @@ export default function Chats() {
                         : undefined
                     }
                   >
-                    <ChatUI chatData={message} index={index} isInitialLoad={isInitialLoad} />
+                    <ChatUI
+                      chatData={message}
+                      index={index}
+                      isInitialLoad={isInitialLoad}
+                    />
                   </div>
                 ))}
               </div>
@@ -527,7 +563,10 @@ export default function Chats() {
           )}
         </div>
         {user ? (
-          <form className="p-2 border-t bg-chat-bg dark:bg-black/40" onSubmit={onSubmitNewMessage}>
+          <form
+            className="p-2 border-t bg-chat-bg dark:bg-black/40"
+            onSubmit={onSubmitNewMessage}
+          >
             <div className="flex items-center gap-2">
               <textarea
                 value={inputText}
@@ -542,7 +581,8 @@ export default function Chats() {
                 variant="primary"
                 disabled={isLoading || !inputText.trim()}
                 className={`px-4 py-2 rounded-lg bg-send-button text-white font-medium transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
-                  (isLoading || !inputText.trim()) && 'opacity-50 cursor-not-allowed'
+                  (isLoading || !inputText.trim()) &&
+                  'opacity-50 cursor-not-allowed'
                 }`}
               >
                 送信

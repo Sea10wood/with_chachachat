@@ -114,7 +114,10 @@ export async function POST(request: Request) {
     // CSRFトークンの検証
     const csrfToken = request.headers.get('X-CSRF-Token');
     if (!csrfToken || csrfToken !== session.access_token) {
-      return NextResponse.json({ error: '無効なリクエストです' }, { status: 403 });
+      return NextResponse.json(
+        { error: '無効なリクエストです' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -122,15 +125,24 @@ export async function POST(request: Request) {
 
     // 入力バリデーション
     if (!message || typeof message !== 'string' || message.trim() === '') {
-      return NextResponse.json({ error: 'メッセージは必須です' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'メッセージは必須です' },
+        { status: 400 }
+      );
     }
 
     if (message.length > MAX_MESSAGE_LENGTH) {
-      return NextResponse.json({ error: 'メッセージが長すぎます' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'メッセージが長すぎます' },
+        { status: 400 }
+      );
     }
 
     if (!channel || typeof channel !== 'string') {
-      return NextResponse.json({ error: 'チャンネル名は必須です' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'チャンネル名は必須です' },
+        { status: 400 }
+      );
     }
 
     // 特殊文字のエスケープ
@@ -139,15 +151,19 @@ export async function POST(request: Request) {
     // レート制限のチェック
     const now = Math.floor(Date.now() / 1000);
     const userRequests = userRequestsMap.get(session.user.id) || [];
-    const recentRequests = userRequests.filter((req) => req.timestamp > now - RATE_LIMIT_WINDOW);
+    const recentRequests = userRequests.filter(
+      (req) => req.timestamp > now - RATE_LIMIT_WINDOW
+    );
 
     if (recentRequests.length >= MAX_REQUESTS_PER_WINDOW) {
       return NextResponse.json(
-        { error: 'レート制限を超えました。しばらく待ってから再試行してください。' },
+        {
+          error:
+            'レート制限を超えました。しばらく待ってから再試行してください。',
+        },
         { status: 429 }
       );
     }
-
     // リクエストを記録
     userRequests.push({ timestamp: now });
     userRequestsMap.set(session.user.id, userRequests);
@@ -166,7 +182,10 @@ export async function POST(request: Request) {
 
     if (insertError) {
       console.error('メッセージ保存エラー:', insertError);
-      return NextResponse.json({ error: 'メッセージの保存に失敗しました' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'メッセージの保存に失敗しました' },
+        { status: 500 }
+      );
     }
 
     // メッセージに@meerchatが含まれている場合のみAIが応答
@@ -189,7 +208,8 @@ export async function POST(request: Request) {
         });
 
         const aiResponse =
-          completion.choices[0]?.message?.content || 'すみません、回答を生成できませんでした。';
+          completion.choices[0]?.message?.content ||
+          'すみません、回答を生成できませんでした。';
 
         // AIの応答を保存
         const { data: aiMessage, error: aiError } = await supabase
@@ -206,7 +226,10 @@ export async function POST(request: Request) {
 
         if (aiError) {
           console.error('AI response save error:', aiError);
-          return NextResponse.json({ error: 'AIの応答の保存に失敗しました' }, { status: 500 });
+          return NextResponse.json(
+            { error: 'AIの応答の保存に失敗しました' },
+            { status: 500 }
+          );
         }
 
         return NextResponse.json(
@@ -219,7 +242,10 @@ export async function POST(request: Request) {
         );
       } catch (openaiError) {
         console.error('OpenAI API error:', openaiError);
-        return NextResponse.json({ error: 'AIの応答生成に失敗しました' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'AIの応答生成に失敗しました' },
+          { status: 500 }
+        );
       }
     }
 
@@ -229,6 +255,9 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error('予期せぬエラー:', error);
-    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'サーバーエラーが発生しました' },
+      { status: 500 }
+    );
   }
 }

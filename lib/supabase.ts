@@ -35,7 +35,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         try {
           const expiresAt = new Date();
           expiresAt.setSeconds(
-            expiresAt.getSeconds() + Number(process.env.NEXT_PUBLIC_SESSION_TIMEOUT || 3600)
+            expiresAt.getSeconds() +
+              Number(process.env.NEXT_PUBLIC_SESSION_TIMEOUT || 3600)
           );
           const item = {
             value,
