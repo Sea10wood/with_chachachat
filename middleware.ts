@@ -16,8 +16,12 @@ export async function middleware(req: NextRequest) {
   // 認証済みユーザーがアクセスできないルート
   const authRoutes = ['/auth/signin', '/auth/signup', '/auth/reset-password'];
 
-  const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route));
-  const isAuthRoute = authRoutes.some((route) => req.nextUrl.pathname.startsWith(route));
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    req.nextUrl.pathname.startsWith(route)
+  );
+  const isAuthRoute = authRoutes.some((route) =>
+    req.nextUrl.pathname.startsWith(route)
+  );
 
   // 認証が必要なルートに未認証でアクセス
   if (isProtectedRoute && !session) {
@@ -37,5 +41,10 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/profile/:path*', '/settings/:path*', '/auth/:path*', '/auth/signin'],
+  matcher: [
+    '/profile/:path*',
+    '/settings/:path*',
+    '/auth/:path*',
+    '/auth/signin',
+  ],
 };

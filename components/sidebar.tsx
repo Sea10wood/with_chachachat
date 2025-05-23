@@ -31,7 +31,9 @@ export default function SideBar() {
   return (
     <div className="w-64 border-r border-border bg-sidebar-bg dark:bg-black/20 h-full overflow-y-auto flex flex-col">
       <div className="p-4 flex-grow">
-        <h2 className="text-xl font-bold mb-4 text-black dark:text-global-bg">スレッド一覧</h2>
+        <h2 className="text-xl font-bold mb-4 text-black dark:text-global-bg">
+          スレッド一覧
+        </h2>
         <div className="space-y-2">
           {threads.map((thread) => (
             <button

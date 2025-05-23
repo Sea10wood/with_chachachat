@@ -13,7 +13,9 @@ interface NavigationProps {
   session: Session | null;
 }
 
-export default function Navigation({ session: initialSession }: NavigationProps) {
+export default function Navigation({
+  session: initialSession,
+}: NavigationProps) {
   const supabase = createClientComponentClient();
   const pathname = usePathname();
   const router = useRouter();
@@ -89,7 +91,10 @@ export default function Navigation({ session: initialSession }: NavigationProps)
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-10">
             <div className="flex items-center space-x-4">
-              <Link href="/" className="text-xl font-bold text-gray-800 dark:text-global-bg">
+              <Link
+                href="/"
+                className="text-xl font-bold text-gray-800 dark:text-global-bg"
+              >
                 MeerChat
               </Link>
               {mounted && (

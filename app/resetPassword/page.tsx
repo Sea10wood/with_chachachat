@@ -47,10 +47,15 @@ const ResetPassword = () => {
 
   return (
     <div className="mx-auto max-w-7xl md:w-1/2 lg:w-1/4 px-4 sm:px-6 lg:px-8 pb-16 pt-20 text-center lg:pt-32">
-      <p className="text-black mb-4">パスワードリセット用のメールアドレスを入力してください</p>
+      <p className="text-black mb-4">
+        パスワードリセット用のメールアドレスを入力してください
+      </p>
       <form className="pt-10 text-left" onSubmit={onSubmit}>
         <div>
-          <label htmlFor="email" className="block mb-2 text-sm font-medium text-black">
+          <label
+            htmlFor="email"
+            className="block mb-2 text-sm font-medium text-black"
+          >
             メールアドレス
           </label>
           <input

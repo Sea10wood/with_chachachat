@@ -48,8 +48,13 @@ export default function Home() {
             priority
           />
         </div>
-        <div className="text-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          <h1 className="text-2xl font-bold mb-4 text-black dark:text-global-bg">ようこそ!</h1>
+        <div
+          className="text-center animate-fade-in"
+          style={{ animationDelay: '0.2s' }}
+        >
+          <h1 className="text-2xl font-bold mb-4 text-black dark:text-global-bg">
+            ようこそ!
+          </h1>
           <Button
             variant="primary"
             onClick={() => router.push('/chats')}

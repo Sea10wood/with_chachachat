@@ -65,7 +65,9 @@ export default function AvatarUpload({
         isComplete: false,
         progress: 0,
       });
-      onError(error instanceof Error ? error.message : 'アバターの更新に失敗しました');
+      onError(
+        error instanceof Error ? error.message : 'アバターの更新に失敗しました'
+      );
     }
   }
 
@@ -102,7 +104,9 @@ export default function AvatarUpload({
                 style={{ width: `${uploadState.progress}%` }}
               />
             </div>
-            <p className="text-sm text-black/70 mt-1">アップロード中... {uploadState.progress}%</p>
+            <p className="text-sm text-black/70 mt-1">
+              アップロード中... {uploadState.progress}%
+            </p>
           </div>
         )}
       </div>

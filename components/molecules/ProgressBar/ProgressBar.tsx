@@ -19,7 +19,9 @@ export default function ProgressBar({
           style={{ width: `${percentage}%` }}
         />
       </div>
-      {showPercentage && <p className="text-sm text-black/70 mt-1">処理中... {percentage}%</p>}
+      {showPercentage && (
+        <p className="text-sm text-black/70 mt-1">処理中... {percentage}%</p>
+      )}
     </div>
   );
 }

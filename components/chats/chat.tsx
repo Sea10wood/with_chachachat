@@ -17,9 +17,9 @@ interface Props {
 export default function ChatUI(props: Props) {
   const { chatData, index, isInitialLoad = false } = props;
   const supabase = createClientComponentClient();
-  const [profile, setProfile] = useState<Database['public']['Tables']['profiles']['Row'] | null>(
-    null
-  );
+  const [profile, setProfile] = useState<
+    Database['public']['Tables']['profiles']['Row'] | null
+  >(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const messageRef = useRef<HTMLDivElement>(null);
   const hasAnimated = useRef(false);
@@ -37,7 +37,11 @@ export default function ChatUI(props: Props) {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data } = await supabase.from('profiles').select().eq('id', chatData.uid).single();
+      const { data } = await supabase
+        .from('profiles')
+        .select()
+        .eq('id', chatData.uid)
+        .single();
       setProfile(data);
     };
     fetchProfile();
@@ -120,7 +124,9 @@ export default function ChatUI(props: Props) {
         <div className="flex flex-col items-center">
           <div className="w-8 h-8 relative mb-1">
             <Image
-              src={isAIResponse ? '/ai.webp' : profile?.avatar_url || '/user.webp'}
+              src={
+                isAIResponse ? '/ai.webp' : profile?.avatar_url || '/user.webp'
+              }
               alt={isAIResponse ? 'AI' : profile?.name || 'User'}
               fill
               className="rounded-full object-cover"
