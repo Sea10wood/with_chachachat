@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import Input from '@/components/atoms/Input/Input';
 
 describe('Input', () => {
@@ -22,24 +23,44 @@ describe('Input', () => {
     expect(screen.getByText('ヘルプテキスト')).toBeInTheDocument();
   });
 
-  it('パスワード表示切り替えボタンが正しく表示される', () => {
-    render(<Input name="test" type="password" />);
-    expect(screen.getByRole('button')).toBeInTheDocument();
-  });
+  describe('パスワード入力フィールド', () => {
+    it('パスワード表示切り替えボタンが表示される', () => {
+      render(<Input name="test" type="password" />);
+      expect(screen.getByRole('button')).toBeInTheDocument();
+    });
 
-  it('パスワード表示切り替えボタンクリック時にtogglePasswordVisibilityが呼ばれる', () => {
-    const handleToggle = jest.fn();
-    render(<Input name="test" type="password" togglePasswordVisibility={handleToggle} />);
-    fireEvent.click(screen.getByRole('button'));
-    expect(handleToggle).toHaveBeenCalled();
-  });
+    it('パスワード表示切り替えボタンクリック時にパスワード表示が切り替わる', async () => {
+      const user = userEvent.setup();
+      render(<Input name="test" type="password" />);
+      
+      const input = screen.getByTestId('password-input');
+      const button = screen.getByRole('button');
+      
+      expect(input).toHaveAttribute('type', 'password');
+      
+      await user.click(button);
+      expect(input).toHaveAttribute('type', 'text');
+      
+      await user.click(button);
+      expect(input).toHaveAttribute('type', 'password');
+    });
 
-  it('パスワード表示状態に応じて適切なアイコンが表示される', () => {
-    const { rerender } = render(<Input name="test" type="password" showPassword={false} />);
-    expect(screen.getByTitle('パスワードを表示')).toBeInTheDocument();
+    it('パスワード表示状態に応じて適切なアイコンが表示される', async () => {
+      const user = userEvent.setup();
+      render(<Input name="test" type="password" />);
+      
+      const button = screen.getByRole('button');
+      expect(button).toHaveAttribute('aria-label', 'パスワードを表示');
+      
+      await user.click(button);
+      expect(button).toHaveAttribute('aria-label', 'パスワードを隠す');
+    });
 
-    rerender(<Input name="test" type="password" showPassword={true} />);
-    expect(screen.getByTitle('パスワードを隠す')).toBeInTheDocument();
+    it('パスワード入力フィールドのスタイルが正しく適用される', () => {
+      render(<Input name="test" type="password" />);
+      const input = screen.getByTestId('password-input');
+      expect(input).toHaveClass('pr-10');
+    });
   });
 
   it('カスタムクラスが正しく適用される', () => {
